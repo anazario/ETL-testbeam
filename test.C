@@ -1,10 +1,13 @@
-#include "Analyzer.h"
+#include "GausFit.h"
 
 void test(){
 
   //Open root file and get TTree                                                                                                                              
   TFile* file = TFile::Open("DataNetScope_Run1276.root");
   TTree* pulse = (TTree*)file->Get("pulse");
+  GausFit object;
+  object.SetChannel(0);
+
 
   /*
   float channel[4][1000];
@@ -22,36 +25,48 @@ void test(){
   pulse->SetBranchStatus("channel", 1);
   pulse->SetBranchStatus("time", 1);
 
-  //int entries = pulse->GetEntries("(amp[0]>50 && amp[0]<160) && (amp[2]>40 && amp[2]<60)");
+  //Select Good Events function (for .h)
+  float chan[4][1000];
+  float time_samp[1][1000];
 
   pulse->Draw(">>list1","(amp[0]>50 && amp[0]<160) && (amp[2]>40 && amp[2]<60)");
   TEventList *list = (TEventList*)gDirectory->Get("list1");
 
   std::vector<int> good_events;
-  /*
+  
   int nentries = list->GetN();
   cout << nentries << endl;
   for(int i = 0; i < nentries; i++){
     pulse->GetEntry(list->GetEntry(i));
     good_events.push_back(list->GetEntry(i));
-    //cout << list->GetEntry(i) << endl;
-
-    for (int j = 0 ; j <1000; j++){
-      channel[0][j]
-    }
-  }
-  */
-
+    cout << "good event number: " << list->GetEntry(i) << endl;
+    return 
+      }
   
-  Analyzer object;
-  object.SetChannel(0);
-  int index_min = object.FindMinAbsolute(pulse, 803);
 
-  pulse->GetPoint(index_min-4,low_edge, y);
-  pulse->GetPoint(index_min+4,high_end, y);
-
-
+  //finding minimum index for fit
   
+  // object.FindMinLoop(pulse,good_events);
+  // int index_min = object.FindMinAbsolute(pulse, good_events);
+  
+ 
+  object.FindMinAbsolute(pulse,803);
+
+  int ch = object.GetChannel();
+
+  TGraphErrors* gr = object.GetTGraph(803,chan[ch], );
+  //gr->Draw();
+
+  int y = 0;
+  gr->GetPoint(index_min-4,low_edge, y);
+  gr->GetPoint(index_min+4,high_end, y);
+
+  //GausFit_MeanTime(gr,)
+
+    
+
+
+
 
   // pulse->GetPoint()
 
