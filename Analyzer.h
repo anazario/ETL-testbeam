@@ -124,6 +124,7 @@ class Analyzer
 
     for(int i = 0; i < Nentries; i++){
       tree->GetEntry(list->GetEntry(i));
+      cout << list->GetEntry(i) << endl; 
       float time_temp = gaus_mean[0]-gaus_mean[channel];
       float amp_temp = amp[channel];
 
@@ -282,7 +283,7 @@ class Analyzer
 
     c1->SetBatch(kTRUE);
 
-    int total_bins = bins-2;
+    int total_bins = bins;
     float step_size = (xmax - xmin)/(total_bins);
 
     int temp_xmin = xmin;
