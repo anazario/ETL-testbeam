@@ -121,6 +121,7 @@ class Analyzer
     int Nentries = list->GetN();
     std::vector<double> time_val;
     std::vector<double> amp_val;
+    std::vector<int> good_events;
 
     for(int i = 0; i < Nentries; i++){
       tree->GetEntry(list->GetEntry(i));
@@ -130,10 +131,14 @@ class Analyzer
 
       good_time_samples.push_back(time_temp);
       good_amp_samples.push_back(amp_temp);
+      good_events.push_back(list->GetEntry(i));
     }
     FindMean(good_time_samples);
     entries = Nentries;
   }//end FindMean function
+
+
+ 
 
   void FormatCuts(int xmin, int xmax){
 
@@ -160,8 +165,27 @@ class Analyzer
   }
 
  public:
+//public methods
 
-  //public members
+ int FindMinAbsolute(TTree* tree, int evt){
+    float chan[4][1000];
+    TBranch* channel_br;
+    tree->SetBranchAddress("channel",chan, &channel_br);
+    // tree->SetBranchStatus("*", 0);  tree->SetBranchStatus("channel", 1);
+
+    tree->GetEntry(evt);
+    int xmin = 999;
+    int loc = 999;
+  
+    for (int j = 0 ; j <989; j++){                                                                                                                           
+      if (chan[channel][j]<xmin && chan[channel][j+1] < 0.5*chan[channel][j] && chan[channel][j] < -40.){
+      xmin = chan[channel][j]; //minimum
+      loc = j; //index number of minimum
+      }
+    } 
+    cout << xmin << endl;
+    return loc;
+  }
 
   //public methods
   void SetCutString(TString pho_cuts, TString ch_cuts){
