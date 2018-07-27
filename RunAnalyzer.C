@@ -17,11 +17,11 @@ void RunAnalyzer(){
 
   Analyzer beam_data;
 
-  beam_data.SetCutString("(amp[0]>50 && amp[0]<160)","(amp[2]>40 && amp[2]<60)");
+  beam_data.SetCutString("(amp[0]>50 && amp[0]<160)","(amp[2]>40 && amp[2]<160)");
   beam_data.SetChannel(2);
   beam_data.FindTimeRes(pulse);
-
-  beam_data.RangePlot(pulse,40,160,14);
+  beam_data.PlotTPeak("FullRange_");
+  beam_data.RangePlot(pulse,40,160,6);
 
   //beam_data.SetCutString("(amp[0]>50 && amp[0]<160)", "(amp[1]>10 && amp[1]<90)");
   //beam_data.SetChannel(1);
