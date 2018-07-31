@@ -30,6 +30,7 @@ class Analyzer
 
   //Private members
   RooPlot* tpeak_plot;
+  RooPlot* amp_plot;
 
   TString cut_string = "";
   TString ch_cut_string = "";
@@ -46,6 +47,9 @@ class Analyzer
   float mean_error = -999.;
   float approx_mean = -999.;
   float actual_mean = -999.;
+  float approx_mpv = -999.;
+  float fit_mpv = -999.;
+  float mpv_error = -999.;
   float tpeak_error = -999.;
 
   vector<float> good_time_samples;
@@ -71,7 +75,7 @@ class Analyzer
     return name;
   }
 
-  void FindMean(std::vector<float> list){
+  double FindMean(std::vector<float> list){
     vector<int> count;
     vector<float> countval;
     vector<std::vector<float>> countvec;
@@ -101,7 +105,7 @@ class Analyzer
       }
     }
     
-    approx_mean = avg;
+    return avg;
   }//end FindMean Method
   
   void SelectGoodSamples(TTree* tree){
@@ -127,17 +131,17 @@ class Analyzer
     for(int i = 0; i < Nentries; i++){
       tree->GetEntry(list->GetEntry(i));
       //cout << list->GetEntry(i) << endl; 
-      float time_temp = gaus_mean[0]-gaus_mean[channel];
+      float time_temp = gaus_mean[1]-gaus_mean[channel];
       float amp_temp = amp[channel];
       
       good_time_samples.push_back(time_temp);
       good_amp_samples.push_back(amp_temp);
       good_events.push_back(list->GetEntry(i));
     }
-    FindMean(good_time_samples);
+    approx_mean = FindMean(good_time_samples);
+    approx_mpv = FindMean(good_amp_samples);
     entries = Nentries;
   }//end FindMean function
-
 
   void FormatCuts(int xmin, int xmax){
 
@@ -148,7 +152,7 @@ class Analyzer
     xmin_str.Form("%i",xmin);
     xmax_str.Form("%i",xmax);
 
-    final_cut_string.Form(genericCut, channel_str.Data(),  xmin_str.Data(), channel_str.Data(), xmax_str.Data());
+    final_cut_string.Form(genericCut, channel_str.Data(), xmin_str.Data(), channel_str.Data(), xmax_str.Data());
 
     step_cuts = final_cut_string;
   }
@@ -165,15 +169,30 @@ class Analyzer
     RooBinning tbins(minRange,maxRange);
     tbins.addUniform(bins,minRange,maxRange);
 
-    //tpeak_error = data.weightError();
-    //cout << tpeak_error << endl;
-    //tpeak_plot->getAttText()->SetTextSize(0.01);
-
     tpeak_plot = var.frame(Range(minRange,maxRange));
     data.plotOn(tpeak_plot,Binning(tbins));
     gaus.plotOn(tpeak_plot);
     gaus.paramOn(tpeak_plot,Format("NE", AutoPrecision(2)), Layout(0.65,0.89,0.89));
     tpeak_plot->getAttText()->SetTextSize(0.02); 
+  }
+
+  void MakeLandau(RooDataSet data, RooRealVar var, RooLandau landau){
+
+    using namespace RooFit;
+
+    double minRange = 50.;
+    double maxRange = 230.;
+
+    amp_plot = var.frame(Range(minRange,maxRange));
+
+    int bins = 30;
+    RooBinning tbins(minRange,maxRange);
+    tbins.addUniform(bins,minRange,maxRange);
+    
+    data.plotOn(amp_plot);
+    landau.plotOn(amp_plot);
+    //landau.paramOn(tpeak_plot,Format("NE", AutoPrecision(2)), Layout(0.65,0.89,0.89));
+    //amp_plot->getAttText()->SetTextSize(0.02);
   }
 
   void PrintSummary(){
@@ -182,7 +201,8 @@ class Analyzer
     cout << "Total Entries: " << total_entries << endl;
     cout << "Pre-Fit Mean: " << approx_mean << endl;
     cout << "Fit from Mean: " << actual_mean << " +/- " << mean_error << endl;
-    cout << "Time Resolution: " << time_res << " ps" << " +/- " << fit_error << endl;
+    cout << "Time Resolution: " << time_res << " +/- " << fit_error << " ps" << endl;
+    cout << "Amplitude MPV: " << fit_mpv << " +/- " << mpv_error << " mV" << endl;
   }
 
  public:
@@ -262,10 +282,18 @@ class Analyzer
     RooRealVar sigma("sigma","sigma", 200., 0., 10000.);
 
     //Define RooGaussian object to fit the RooDataSet                                                                                          
-    RooGaussian gx("gx","gx",gausmean,mu,sigma) ;
+    RooGaussian gx("gx","gx",gausmean,mu,sigma);
+
+    //Define RooRealVar objects for RooLandau distribution                                                                                    
+    RooRealVar mu2("mu","mu", approx_mpv, -1000000., 1000000.);
+    RooRealVar sigma2("sigma","sigma", 200., 0., 10000.);
+
+    //Define RooLandau object to fit the amplitude RooDataSet                                                                                 
+    RooLandau landau("landau","landau",ampt,mu2,sigma2);
 
     //Fit a gaussian distribution to the RooDataSet                                                                                            
     gx.fitTo(time_data);
+    landau.fitTo(amp_data);
 
     //Obtain the mean and sigma parameters from the applied fit                                                                                
     //Sigma gives the time resolution for the sensor                                                                                           
@@ -277,6 +305,11 @@ class Analyzer
 
     MakeTPeak(time_data,gausmean,gx);
 
+    fit_mpv = mu2.getValV();
+    mpv_error = mu2.getError();
+
+    MakeLandau(amp_data,ampt,landau);
+
     PrintSummary();
     ClearVectors();
   }//end FindTimeRes Function
@@ -284,8 +317,6 @@ class Analyzer
   void PlotTPeak(TString name){
     TCanvas *cv = new TCanvas("cv"+name,"cv"+name,600,800);
     cv->SetBatch(kTRUE);
-
-    double max = tpeak_plot->GetMaximum();
 
     tpeak_plot->SetXTitle("time (ns)");
     tpeak_plot->SetYTitle("Events");
@@ -299,6 +330,23 @@ class Analyzer
     delete cv;
   }
   
+  void PlotLandau(TString name){
+
+    TCanvas *cv = new TCanvas("cv"+name,"cv"+name,600,800);
+    cv->SetBatch(kTRUE);
+
+    amp_plot->SetXTitle("amplitude (mV)");
+    amp_plot->SetYTitle("Events");
+    amp_plot->SetTitle("");
+    amp_plot->Draw();
+    CMSmark();
+
+    cv->SaveAs("plots/"+name+"amplitude.pdf");
+    cv->Close();
+
+    delete cv;
+  }
+
   void RangePlot(TTree* tree, int xmin, int xmax, int bins){
 
     TCanvas *c1 = new TCanvas("c1","c1",600,800);
@@ -326,8 +374,6 @@ class Analyzer
 
       FindTimeRes(tree);
       PlotTPeak(GetName(temp_xmin,temp_xmax));
-
-      cout << GetName(temp_xmin,temp_xmax) << endl;
 
       cut_vec.push_back(step_cuts);
       entries_vec.push_back(total_entries);
