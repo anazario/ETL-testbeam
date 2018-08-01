@@ -108,7 +108,7 @@ class Analyzer
     return avg;
   }//end FindMean Method
   
-  void SelectGoodSamples(TTree* tree){
+  void SelectGoodSamples(TTree* tree, TString branchName){
 
     //Containers for the TTree branches                                                                                                        
     float gaus_mean[4];
@@ -117,7 +117,7 @@ class Analyzer
     TBranch* gausbranch;
     TBranch* ampbranch;
 
-    tree->SetBranchAddress("gaus_mean", gaus_mean, &gausbranch);
+    tree->SetBranchAddress(branchName, gaus_mean, &gausbranch);
     tree->SetBranchAddress("amp", amp, &ampbranch);
 
     tree->Draw(">>list1",Analyzer::cut_string);
@@ -243,13 +243,13 @@ class Analyzer
     cout << "Channel: " << channel << endl;
   }
 
-  void FindTimeRes(TTree* tree){
+  void FindTimeRes(TTree* tree, TString branchName){
 
-    SelectGoodSamples(tree);
+    SelectGoodSamples(tree,branchName);
 
     //Define RooRealVar variables to be filled from TTree 
     //These are the parameters that will be fit with Roofit                                                   
-    RooRealVar gausmean("gaus_mean","gaus_mean",0,100);//time interval                                   
+    RooRealVar gausmean(branchName,"gaus_mean",0,100);//time interval                                   
     RooRealVar ampt("ampt","ampt",0,500);//amplitude                                                                                       
     
     RooArgSet timeVarSet(gausmean,ampt);
@@ -294,7 +294,7 @@ class Analyzer
     //Fit a gaussian distribution to the RooDataSet                                                                                            
     gx.fitTo(time_data);
     landau.fitTo(amp_data);
-
+ 
     //Obtain the mean and sigma parameters from the applied fit                                                                                
     //Sigma gives the time resolution for the sensor                                                                                           
     actual_mean = mu.getValV();
@@ -347,7 +347,7 @@ class Analyzer
     delete cv;
   }
 
-  void RangePlot(TTree* tree, int xmin, int xmax, int bins){
+  void RangePlot(TTree* tree, TString branchName, int xmin, int xmax, int bins){
 
     TCanvas *c1 = new TCanvas("c1","c1",600,800);
 
@@ -372,7 +372,7 @@ class Analyzer
       FormatCuts(temp_xmin,temp_xmax);
       SetCutString(pho_cut_string, step_cuts);
 
-      FindTimeRes(tree);
+      FindTimeRes(tree,branchName);
       PlotTPeak(GetName(temp_xmin,temp_xmax));
 
       cut_vec.push_back(step_cuts);

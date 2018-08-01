@@ -11,9 +11,16 @@ void RunAnalyzer(){
 
   //Turn on only the branches we need                                                                  
   pulse->SetBranchStatus("gaus_mean", 1);
+  pulse->SetBranchStatus("LP1_10", 1);
+  pulse->SetBranchStatus("LP1_20", 1);
+  pulse->SetBranchStatus("LP1_30", 1);
+  pulse->SetBranchStatus("LP2_10", 1);
+  pulse->SetBranchStatus("LP2_20", 1);
+  pulse->SetBranchStatus("LP2_30", 1);
   pulse->SetBranchStatus("amp", 1);
   pulse->SetBranchStatus("i_evt", 1);
   pulse->SetBranchStatus("channel", 1);
+
 
   Analyzer beam_data;
   /*
@@ -27,7 +34,7 @@ void RunAnalyzer(){
   
   beam_data.SetCutString("(amp[1]>50 && amp[1]<225)", "(amp[2]>60 && amp[2]<225)");
   beam_data.SetChannel(2);
-  beam_data.FindTimeRes(pulse);
+  beam_data.FindTimeRes(pulse,"LP2_20");
   beam_data.PlotTPeak("FullRange_");
   beam_data.PlotLandau("");
   
