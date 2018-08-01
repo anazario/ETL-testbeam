@@ -41,6 +41,7 @@ class GausFit
 	float channel_samp[4][1000];
 	float time_samp[1][1000];
 	std::vector<int> good_events;
+	TF1* fpeak;
 
 
 	
@@ -104,7 +105,7 @@ class GausFit
 		int xmin = 999;
 		int N = 1000; //number of samples
 
-		for (int j = 0 ; j < N-2; j++){                                                                                                                           
+		for (int j = 100 ; j < N-2; j++){                                                                                                                           
 	      	if (channel_samp[channel][j]<xmin && channel_samp[channel][j+1] < 0.5*channel_samp[channel][j]){
 	      		xmin = channel_samp[channel][j]; //minimum
 	      		loc = j; //index number of minimum
@@ -145,39 +146,75 @@ class GausFit
 	}
 
 
-	std::vector<float> GausFit_MeanTime(TGraphErrors* tree, const float index_first, const float index_last, const int evt){
-		TF1* fpeak = new TF1("fpeak","gaus",index_first, index_last);
+	TF1* GausFit_MeanTime(TGraphErrors* tree, const float index_first, const float index_last, const int evt){
+		fpeak = new TF1("fpeak","gaus",index_first, index_last);
 		//fpeak->Print();
+
 		
 		tree->Fit("fpeak", "Q", " ", index_first, index_last);
 		float chi2 = fpeak->GetChisquare();
 		// cout << "fit tree to gaus" << endl;
 		float timepeak = fpeak->GetParameter(1); //mean
 		// cout << "gaus mean: " << timepeak << endl;
+		
 		TCanvas* c = new TCanvas("c","c",500,500);
-		// cout << "created canvas" << endl;
+		
 		TString title_str = Form("%i", evt);
-		tree->GetXaxis()->SetLimits(timepeak-10,timepeak+10);
+		tree->GetXaxis()->SetLimits(timepeak-5,timepeak+5);
 		tree->GetXaxis()->SetTitle("time (ns)");
 		tree->GetYaxis()->SetTitle("amplitube (mV)");
 		tree->SetTitle("Event " + title_str);
 		tree->SetMarkerSize(0.5);
 		tree->SetMarkerStyle(20);
-		
-		tree->Draw();
 		tree->PaintStats(fpeak);
+		tree->Draw();
+		
 		c->Modified();
 		// c->SaveAs("GausFit_plots/Event number"+title_str+".pdf");
-		c->Close();
+		//c->Close();
 		//c->SaveAs(filename+"GausPeakPlots.pdf");
+		/*
 		std::vector<float> parameters;
 		parameters.push_back(timepeak);
 		parameters.push_back(chi2);
+		parameters.push_back(max);
+		parameters.push_back(entr_time_cfd);
 		return parameters;
-		//return chi2;
-		
+		*/
+		return fpeak;
 	}
 
+	std::vector<Double_t> constFraction(Double_t fraction, int index_first, int index_last){
+		std::vector<Double_t> times;
+		float max = fpeak->GetMaximum(index_first, index_last);
+		float max_loc = fpeak->GetX(max, index_first, index_last);
+
+
+		Double_t const_frac = fraction;
+		Double_t thresh = const_frac*max;
+		Double_t entr_time_cfd = fpeak->GetX(thresh, index_first, max_loc);
+		Double_t exit_time_cfd = fpeak->GetX(thresh, max, index_last);
+		Double_t time_thresh = (entr_time_cfd+exit_time_cfd)/2;
+
+
+
+		TLine* line = new TLine(entr_time_cfd, thresh, exit_time_cfd, thresh);
+		line->Draw();
+		times.push_back(thresh);
+		times.push_back(entr_time_cfd);
+		times.push_back(time_thresh);
+		return times;
+	}
+
+
+/*
+	Double_t constThresh(){
+
+
+		return time_thresh
+	}
+	
+*/
 
 
 
