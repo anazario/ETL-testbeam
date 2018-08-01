@@ -32,25 +32,32 @@ void runGausFit(TString file_arg, int pho_ch, int pho_min, int pho_max, int ch, 
 
 
 
-   for(int i = 0; i < 1; i++){
+   for(int i = 0; i < 1; i++){ //use length to loop over all good events
       int index_min = object.FindMinAbsolute(pulse, good_events[i]);
       cout << "event number: " << good_events[i] << endl;
       cout << "lowest index: " << index_min << endl;
       
       TGraphErrors* gr = object.GetTGraph(good_events[i]);
-      gr->Draw();
+      
        
       Double_t y = 0.; Double_t low_edge = 0.; Double_t high_edge = 0.;
       gr->GetPoint(index_min-6,low_edge, y);
-      gr->GetPoint(index_min+6, high_edge, y);
+      gr->GetPoint(index_min+12, high_edge, y);
        
-      std::vector<float> parameters = object.GausFit_MeanTime(gr, low_edge, high_edge, good_events[i]);
-      cout << "mean: " << parameters[0] << endl;
-      cout << "chi2: " << parameters[1] << endl;
-
-      //cout << "gaus_mean: " << timepeak << " ns" << endl;
+      TF1* fpeak = object.GausFit_MeanTime(gr, low_edge, high_edge, good_events[i]);
+      std::vector<double> times = object.constFraction(0.2, low_edge, high_edge);
       
+
+      // cout << "mean: " << fpeak->GetParameter(1) << " ns" << endl;
+      cout << "chi2: " << fpeak->GetChisquare() << endl;
+      cout << "Threshold value: " << times[0] << " mV" << endl;
+      cout << "Const. Fraction Disc. time: " << times[1] << " ns" << endl;
+      cout << "Time over threshold: " << times[2] << " ns" << endl;
+
+
+      //gr->Draw();
    }
+
    cout << "Channel: " << ch << endl;
    cout << "number of good events in this run: " << length << endl;
   
