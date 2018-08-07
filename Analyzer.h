@@ -176,7 +176,7 @@ class Analyzer
     tpeak_plot->getAttText()->SetTextSize(0.02); 
   }
 
-  void MakeLandau(RooDataSet data, RooRealVar var, RooLandau landau){
+  void MakeLandau(RooDataSet data, RooRealVar var, RooAddPdf landau){
 
     using namespace RooFit;
 
@@ -191,8 +191,6 @@ class Analyzer
     
     data.plotOn(amp_plot);
     landau.plotOn(amp_plot);
-    //landau.paramOn(tpeak_plot,Format("NE", AutoPrecision(2)), Layout(0.65,0.89,0.89));
-    //amp_plot->getAttText()->SetTextSize(0.02);
   }
 
   void PrintSummary(){
@@ -202,7 +200,7 @@ class Analyzer
     cout << "Pre-Fit Mean: " << approx_mean << endl;
     cout << "Fit from Mean: " << actual_mean << " +/- " << mean_error << endl;
     cout << "Time Resolution: " << time_res << " +/- " << fit_error << " ps" << endl;
-    cout << "Amplitude MPV: " << fit_mpv << " +/- " << mpv_error << " mV" << endl;
+    //cout << "Amplitude MPV: " << fit_mpv << " +/- " << mpv_error << " mV" << endl;
   }
 
  public:
@@ -250,14 +248,11 @@ class Analyzer
     //Define RooRealVar variables to be filled from TTree 
     //These are the parameters that will be fit with Roofit                                                   
     RooRealVar gausmean(branchName,"gaus_mean",0,100);//time interval                                   
-    RooRealVar ampt("ampt","ampt",0,500);//amplitude                                                                                       
     
-    RooArgSet timeVarSet(gausmean,ampt);
-    RooArgSet ampVarSet(ampt);
+    RooArgSet timeVarSet(gausmean);
 
     //Define the RooDataSet that will be filled from the TTree                                              
     RooDataSet time_data("time_data", "time_data",timeVarSet);
-    RooDataSet amp_data("amp_data", "amp_data", ampVarSet);
 
     int count = 0;
 
@@ -269,9 +264,6 @@ class Analyzer
 	time_data.add(RooArgSet(gausmean),1.0,0);
 	count++;
       }
-      //Fill amplitude RooDataSet                                         
-      ampt.setVal(good_amp_samples[i]);
-      amp_data.add(RooArgSet(ampt),1.0,0);
     }
 
     total_entries = count;
@@ -284,16 +276,8 @@ class Analyzer
     //Define RooGaussian object to fit the RooDataSet                                                                                          
     RooGaussian gx("gx","gx",gausmean,mu,sigma);
 
-    //Define RooRealVar objects for RooLandau distribution                                                                                    
-    RooRealVar mu2("mu","mu", approx_mpv, -1000000., 1000000.);
-    RooRealVar sigma2("sigma","sigma", 200., 0., 10000.);
-
-    //Define RooLandau object to fit the amplitude RooDataSet                                                                                 
-    RooLandau landau("landau","landau",ampt,mu2,sigma2);
-
     //Fit a gaussian distribution to the RooDataSet                                                                                            
     gx.fitTo(time_data);
-    landau.fitTo(amp_data);
  
     //Obtain the mean and sigma parameters from the applied fit                                                                                
     //Sigma gives the time resolution for the sensor                                                                                           
@@ -305,14 +289,70 @@ class Analyzer
 
     MakeTPeak(time_data,gausmean,gx);
 
-    fit_mpv = mu2.getValV();
-    mpv_error = mu2.getError();
-
-    MakeLandau(amp_data,ampt,landau);
-
     PrintSummary();
     ClearVectors();
   }//end FindTimeRes Function
+
+  void FitAmpDistribution(TTree* tree, TString branchName){
+    SelectGoodSamples(tree,branchName);
+
+    RooRealVar ampt("amplitude","ampt",0,500);//amplitude
+    RooArgSet ampVarSet(ampt);
+
+    //Define the RooDataSet that will be filled from the TTree    
+    RooDataSet amp_data("amp_data", "amp_data", ampVarSet);
+
+
+    int count = 0;
+    //Fill amplitude RooDataSet
+    for (int i = 0; i < entries; i++){
+      if(good_time_samples[i]>0){
+        ampt.setVal(good_amp_samples[i]);
+        amp_data.add(RooArgSet(ampt),1.0,0);
+	count++;
+      }
+    }
+
+    //Define RooRealVar objects for RooLandau distribution
+    RooRealVar ml("ml","ml", approx_mpv, -1000000., 1000000.);
+    RooRealVar sl("sl","sl", 200., 0., 10000.);
+
+    //Define RooLandau object to fit the amplitude RooDataSet
+    RooLandau landau("landau","landau",ampt,ml,sl);
+
+    //Define RooRealVar objects for RooGauss distribution
+    RooRealVar mg("mg","mg", approx_mpv, -1000000., 1000000.);
+    RooRealVar sg("sl","sl", 200., 0., 10000.);
+
+    //Construct Gaussian
+    RooGaussian gauss("gauss", "gauss", ampt, mg, sg);
+
+    // Construct landau (x) gauss
+    RooFFTConvPdf lxg("lxg", "landau (X) gauss", ampt, landau, gauss) ;
+    //Extended variable
+    RooRealVar* Ns = new RooRealVar( "Ns", "N_{s}", 8000, "events");
+
+    Ns->setVal(count);
+
+    RooAddPdf ex_lxg("conv_gauss_landau", "extLxG", RooArgList(lxg), RooArgList(*Ns) );
+
+    //landau.fitTo(amp_data);
+    ex_lxg.fitTo(amp_data, RooFit::Strategy(0), RooFit::Extended( kTRUE ), RooFit::Range("fitRange") );
+
+    fit_mpv = ml.getValV();
+    mpv_error = ml.getError();
+
+    double gfit = mg.getValV();
+    double gfitError = mg.getError();
+
+    MakeLandau(amp_data,ampt,ex_lxg);
+
+    //cout << "Amplitude MPV: " << fit_mpv << " +/- " << mpv_error << " mV" << endl;
+    cout << "Landau Fit MPV: " << fit_mpv << " +/- " << mpv_error << " mV" << endl;
+    cout << "Gaussian Fit Mean: " << gfit << " +/- " << gfitError << " mV" << endl; 
+
+    ClearVectors();
+  }
 
   void PlotTPeak(TString name){
     TCanvas *cv = new TCanvas("cv"+name,"cv"+name,600,800);

@@ -36,6 +36,7 @@ void RunAnalyzer(){
   beam_data.SetChannel(2);
   beam_data.FindTimeRes(pulse,"LP2_20");
   beam_data.PlotTPeak("FullRange_");
+  beam_data.FitAmpDistribution(pulse,"LP2_20");
   beam_data.PlotLandau("");
   
  }
