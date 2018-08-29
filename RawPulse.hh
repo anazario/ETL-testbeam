@@ -26,7 +26,7 @@ public:
 
     void SetAmpMinimum(double pho_min, double chan1_min, double chan2_min = -999);
     void SetAmpMaximum(double pho_min, double chan1_min, double chan2_min = -999);
-    void SetCuts(int pho_ch, int channel_num);
+    void SetCuts(int pho_ch);
     void GraphFirstEvent(bool on = false);
 
 
@@ -65,6 +65,7 @@ private:
     std::vector<float> m_copy_time;
 
     int loc;
+    int channel_num;
     
     
     TBranch* channel_br;
@@ -137,6 +138,7 @@ inline RawPulse::RawPulse(TString file, int channel){
 
 inline void RawPulse::SetChannel(int channel){
     m_channel = channel;
+    channel_num = channel;
 }
 
 inline void RawPulse::GetTree(TString file){
@@ -189,7 +191,7 @@ inline void RawPulse::GetTree(TString file){
 
 
 
-inline void RawPulse::SetCuts(int pho_num, int channel_num){
+inline void RawPulse::SetCuts(int pho_num){
     TString chnum_str = to_string(channel_num);
     TString chmin_str = to_string(m_channel_min[channel_num]);
     TString chmax_str = to_string(m_channel_max[channel_num]);
@@ -409,11 +411,6 @@ inline int RawPulse::GetIdxFirstCross(float val, float* v,  int i_st, int direct
     return i; //returns first index after threshold that made while loop break
     // cout << "GetIdxFirstCross end" << endl;
 }
-
-
-
-
-
 
 
 

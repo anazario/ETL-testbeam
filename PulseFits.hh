@@ -11,7 +11,7 @@ class PulseFits : public RawPulse {
 //declare functions below
 public:
 	PulseFits(){};
-	PulseFits(TString file, int channel, float fraction) : RawPulse(file, channel){ };
+	PulseFits(TString file, int channel) : RawPulse(file, channel){ };
 
 	virtual ~PulseFits(){ };
 
@@ -105,7 +105,7 @@ inline void PulseFits::PulseInit(float fraction){
 
 inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<float> &outputtimes){
 	// cout << "gettimes start" << endl;
-	
+
 	int NEvents = good_events.size();
 	// cout << "good events size: " << NEvents << endl;
 	for(int i = 0; i < NEvents; i++){ 
@@ -372,59 +372,6 @@ inline void PulseFits::linearTimes(std::vector<float> &linTimes){
 
 
 
-
-
-
-
-
-
-
-//*******************
-//LOOK AT PICTURE TO FIGURE OUT ORDER OF LOOPS IN PULSEFIT AND .C FILE
-//RESTRUCTURE PULSEFITS ACCORDINGLY
-
-
-
-
-
-// inline std::vector<float> PulseFits::GetGausTimeMeasurements(int evt, ){
-// 	float gaus_le_time = gausTimes(100, std::vector<Double_t>& gausMeanTime); //LE time
-// 	float mean_time = gausMeanTime();
-
-// 	gausTimes.push_back(gaus_cfd_time);
-// 	gausMeanTime.push_back(mean_time);
-// }
-
-// inline std::vector<float> PulseFits::GetQuadTimeMeasurements(std::vector<Double_t>& quadTimes){
-// 	Double_t quad_time = quadMaxTime();
-
-// 	quadTimes.push_back(quad_time);
-// }
-// inline std::vector<float> PulseFits::GetLinearTimeMeasurements(std::vector<float>& linearTimes){
-// 	float lin_cfd_time = linearTimes(.2); //CFD Time
-// 	float lin_le_time = linearTimes(100); //LE time
-
-// 	linearTimes.push_back(lin_cfd_time);
-// }
-
-
-// inline std::vector<float> PulseFits::GetSampleTimeMeasurements(std::vector<Double_t>& sampTimes){
-// 	Double_t samp_max_time = sampMaxTime();
-
-// 	sampTimes.push_back(samp_max_time);
-// }
-
-
-// inline std::vector<float> PulseFits::GetAmpMeasurements(std::vector<float> &quadAmps, std::vector<float> &gausAmps){
-// //use length to loop over all good events 
-// 	// cout << "event #: " << good_events[i] << endl;
-// 	float quad_amp = quadFitAmp();
-// 	float gaus_amp = gausFitAmp();
-
-// 	//create vectors of amp measurements for each event
-// 	quadAmps.push_back(quad_amp);
-// 	gausAmps.push_back(gaus_amp);		
-// }
 
 
 
