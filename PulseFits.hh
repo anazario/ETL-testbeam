@@ -22,7 +22,7 @@ public:
 	// std::vector<float> PulseFits::GetQuadTimeMeasurements(std::vector<Double_t>& quadTimes);
 	// std::vector<float> PulseFits::GetLinearTimeMeasurements(std::vector<float>& linearTimes);
 	// std::vector<float> PulseFits::GetSampleTimeMeasurements(std::vector<Double_t>& sampTimes);
-	void GetTimes(TString timetype, float fraction, std::vector<Double_t> &outputtimes);
+	void GetTimes(TString timetype, float fraction, std::vector<float> &outputtimes);
 	void GetAmps(TString timetype, float fraction, std::vector<float>& outputamps);
 
 
@@ -69,9 +69,9 @@ private:
 
 	// void GetTGraph(int evt);
 
-	void gausTimes(std::vector<Double_t> &gausTimes);
-	void quadTimes(std::vector<Double_t> &quadtime);
-	void linearTimes(std::vector<Double_t> &linTimes);
+	void gausTimes(std::vector<float> &gausTimes);
+	void quadTimes(std::vector<float> &quadtime);
+	void linearTimes(std::vector<float> &linTimes);
 	void quadFitAmp(std::vector<float> &quadAmps, bool draw_opt); //gets amplitude from quadratic fit
 	void gausFitAmp(std::vector<float> &gausAmps); //gets amplitude from gaussian fit
 	void gausFitAmp();
@@ -263,7 +263,7 @@ inline void PulseFits::gausFitAmp(){
 //////////////
 //GET TIMES///
 //////////////
-inline void PulseFits::gausTimes(std::vector<Double_t> &gausTimes){
+inline void PulseFits::gausTimes(std::vector<float> &gausTimes){
 	// cout << "start gaustimes" << endl;
 	// cout << "gaus_low_edge: " << gaus_low_edge << endl;
 	// cout << "gaus_high_edge: " << gaus_high_edge << endl;
@@ -297,7 +297,7 @@ inline void PulseFits::gausTimes(std::vector<Double_t> &gausTimes){
 
 
 
-inline void PulseFits::quadTimes(std::vector<Double_t> &quadtime){
+inline void PulseFits::quadTimes(std::vector<float> &quadtime){
 	Double_t quad_max_loc = fquad->GetX(quadamp, quad_low_edge, quad_high_edge);
 
 	if(m_frac < 1){
@@ -336,7 +336,7 @@ inline void PulseFits::linearAmp(std::vector<float> &linAmps){
 }
 
 
-inline void PulseFits::linearTimes(std::vector<Double_t> &linTimes){
+inline void PulseFits::linearTimes(std::vector<float> &linTimes){
 	//returns line of fit between index over threshold
 	//linearFit done on Rising Edge, will maybe look at linearFit of falling edge later
     //find samples on either side of threshold
