@@ -27,32 +27,46 @@ public:
     void SetAmpMinimum(double pho_min, double chan1_min, double chan2_min = -999);
     void SetAmpMaximum(double pho_min, double chan1_min, double chan2_min = -999);
     void SetCuts(int pho_ch, int channel_num);
-    void GraphGoodEvents();
+    void GraphFirstEvent(bool on = false);
 
 
 
 
 
 protected:
-    // double GetMinAmp();
+    TTree* runtree;
+    TFile* runfile;
+    int m_channel;
+    float m_sample[NUM_CHANNELS][NUM_SAMPLES]; 
+    float m_time[NUM_CHANNELS][NUM_SAMPLES];
+    int idx_min;
+    void GetGoodEvents();
+    TGraphErrors* GetTGraph(int evt);
+    std::vector<int> good_events;
+    int GetIdxFirstCross(float value, float* v,  int i_st, int direction=+1);
+    void linearInit(float amp_frac=0);
+    Double_t max_samp_amp;
+
+    float t_val_max;
+    float t_val_min;
+    float t_samp_max;
+
     
 
 private:
 
-    int m_channel;
-    float m_sample[NUM_CHANNELS][NUM_SAMPLES]; 
-    float m_time[NUM_CHANNELS][NUM_SAMPLES]; //pointer to first element in array
+ //pointer to first element in array
     // int NUM_SAMPLES;
 
     std::vector<double> m_channel_min;
     std::vector<double> m_channel_max;
-    std::vector<int> good_events;
+    
     std::vector<float> m_copy_sample;
     std::vector<float> m_copy_time;
 
-
-    TFile* runfile;
-    TTree* runtree;
+    int loc;
+    
+    
     TBranch* channel_br;
     TBranch* time_br;
     TBranch* amp_br;
@@ -63,10 +77,14 @@ private:
     
     void SetSamples(float* sample, float* time, int NSAMPLES, bool copy = false);
     void SetChannel(int channel);
-    void GetGoodEvents();
-    TGraphErrors* GetTGraph(int evt);
+    
+    
 
 };
+
+
+
+
 
 
 
@@ -91,7 +109,6 @@ private:
 
 
 
-// class 
 
 
 #endif
@@ -103,7 +120,6 @@ private:
 inline RawPulse::RawPulse(){ 
     m_sample;
     m_time;
-
 }
 
 // inline RawPulse::RawPulse(float* sample, float* time, int NSAMPLES, bool copy = false){
@@ -137,7 +153,7 @@ inline void RawPulse::GetTree(TString file){
     // runtree->SetBranchAddress("amp",amp_samp, &amp_br);
 }
 
-
+//SetBranchAddress fills m_sample with samples from branches
 // inline void RawPulse::SetSamples(float* sample, float* time, int NSAMPLES, bool copy = false){
 //     if(!copy){
 //         m_sample = sample;
@@ -233,7 +249,7 @@ inline void RawPulse::SetAmpMaximum(double pho_max, double chan1_max, double cha
 
 inline void RawPulse::GetGoodEvents(){
     if(good_events.size()>0) good_events.clear();
-    cout << "get good events" << endl;
+    // cout << "get good events" << endl;
     // cout << "cuts: " << m_cut_string << endl;
     runtree->Draw(">>EventList", m_cut_string);
     // cout << "draw cutstring" << endl;
@@ -259,7 +275,7 @@ inline void RawPulse::GetGoodEvents(){
     // evtlist->Delete();
     // return good_events;
     // cout << good_events[0] << endl;
-    cout << "number of good events: " << good_events.size() << endl;
+    // cout << "number of good events: " << good_events.size() << endl;
 }
 
 
@@ -270,22 +286,32 @@ inline void RawPulse::GetGoodEvents(){
 
 
 
-inline void RawPulse::GraphGoodEvents(){
-    // std::vector<int> good_events = GetGoodEvents();
-    cout << "graph good events" << endl;
-    int NEvents = good_events.size();
-    // cout << "set good events size = " << NEvents << endl;
-    // cout << "good event 0 = " << good_events[1] << endl;
-    for(int i = 0; i < 1; i++){ //set amount of events to graph
-        // cout << "start graphgoodevents for loop through good events" << endl;
-        // cout << "good event # " << i << endl;
-        // cout << "event #: " << good_events[i] << endl;
-        TGraphErrors* gr = GetTGraph(good_events[i]);
-        // cout << "got tgraph of good event" << endl;
-        gr->Draw();   
-        // cout << "draw good event" << endl;
+inline void RawPulse::GraphFirstEvent(bool on){
+    if(on){
+        // std::vector<int> good_events = GetGoodEvents();
+        cout << "graph first pulse" << endl;
+        // int NEvents = good_events.size();
+        // cout << "set good events size = " << NEvents << endl;
+        // cout << "good event 0 = " << good_events[1] << endl;
+        for(int i = 0; i < 1; i++){ //set amount of events to graph
+            // cout << "start graphgoodevents for loop through good events" << endl;
+            // cout << "good event # " << i << endl;
+            // cout << "event #: " << good_events[i] << endl;
+            TGraphErrors* gr = GetTGraph(good_events[i]);
+            // cout << "got tgraph of good event" << endl;
+            gr->GetXaxis()->SetTitle("time (ns)");
+            gr->GetYaxis()->SetTitle("amplitude (mV)");
+            gr->Draw();   
+            // cout << "draw good event" << endl;
+        }
     }
+    if(!on){
+        cout << "do not graph first pulse" << endl;
+    }
+
 }
+
+
 
 
 
@@ -296,25 +322,39 @@ inline TGraphErrors* RawPulse::GetTGraph(int evt){
     // cout << "channel #: " << m_channel << endl;
     float* channel_arg = m_sample[m_channel];
     float* time_arg = m_time[0];
-    // cout << "sample 300: " << channel_arg[300] << endl;
-    // cout << "time 0: " << time_arg[0] << endl;
+    float xmin = 999;
+    // cout << "sample 316: " << channel_arg[316] << endl;
+    // cout << "time 316: " << time_arg[316] << endl;
     //Setting Errors
     float errorX[NUM_SAMPLES], errorY[NUM_SAMPLES], channelFlip[NUM_SAMPLES];
     // cout << "set new error and channel arrays" << endl;
     float _errorY = 0.00; //5%error on Y
     // cout << "set null y error" << endl;
-    for ( int i = 0; i < NUM_SAMPLES; i++ ){
-        // cout << "start gettgraph for loop" << endl;
+    // cout << "start gettgraph for loop" << endl;
+    for ( int i = 0; i < NUM_SAMPLES; i++ ){                                                                                                                        
+        if (channel_arg[i]<xmin && channel_arg[i+1] < 0.5*channel_arg[i]){
+            xmin = channel_arg[i]; //minimum
+            loc = i; //index number of minimum
+        }
         errorX[i]       = .0;
         // cout << "set x error" << endl;
         errorY[i]       = _errorY*channel_arg[i];
         // cout << "set y error" << endl;
         channelFlip[i] = -channel_arg[i];
         // cout << "flip channel" << endl;
-        //cout << "sample number: " << i << endl;
-        //cout << "time: " << time_arg[i] << endl;
-        //cout << "channel flipped: " << channelFlip[i] << endl;
+        // cout << "sample number: " << i << endl;
+        // cout << "time: " << time_arg[i] << endl;
+        // cout << "channel flipped: " << channelFlip[i] << endl;
     }
+    idx_min = loc;
+    // cout << "end of for loop \n" << endl;
+    // cout << "index of minimum: " << idx_min << endl;
+    max_samp_amp = channelFlip[idx_min];
+    // cout << "amplitude of idx_min: " << max_samp_amp << endl;
+    // cout << "sample 316: " << channelFlip[316] << endl;
+    // cout << "time 1: " << time_arg[1] << endl;
+
+
     // cout << "end for loop" << endl;
     TGraphErrors* tg = new TGraphErrors(NUM_SAMPLES, time_arg, channelFlip, errorX, errorY );
     // cout << "created new tgraph" << endl;
@@ -322,12 +362,75 @@ inline TGraphErrors* RawPulse::GetTGraph(int evt){
     // cout << "returned new tgraph" << endl;
 }
 
-// inline double RawPulse::GetMinAmp(){
-//     double amp_min = 0;
-//     for(int i = 0; i < NUM_SAMPLES; i++){
-//         if(fabs(m_sample[i]) > amp_min){
-//             amp_min = fabs(m_sample[i]);
-//         }
-//     }
-//     return amp_min;
-// }
+
+
+
+inline void RawPulse::linearInit(float amp_frac){ 
+//if direction + amp_frac are set to 0, find the time of the max sample
+//if direction + amp_frac != 0, find time of crossing index
+    // cout << "linearinit start" << endl;
+        float thresh = max_samp_amp*amp_frac;
+        // cout << "max_samp_amp: " << max_samp_amp << endl;
+        int i_start = GetIdxFirstCross(thresh, m_sample[m_channel], idx_min, -1);
+        int i_end = GetIdxFirstCross(thresh, m_sample[m_channel], i_start, +1); 
+        //find time value of samples
+        t_val_min = m_time[0][i_start];
+        t_val_max = m_time[0][i_end];
+        // cout << "end time: " << t_val_max << endl;
+        // cout << "start time: " << t_val_min << "\n" << endl;
+        t_samp_max = m_time[0][idx_min];
+        // cout << "time of max amplitude: " << t_max << " ns" << endl;
+}
+
+
+
+
+inline int RawPulse::GetIdxFirstCross(float val, float* v,  int i_st, int direction){
+//value = amp frac; v = channel[i]; i_st = starting index (idx_min); direction = left/right 
+//returns first index after crossing amp.frac.
+    //iterates through samples and checks to see what is the first index after crossing amp.frac.
+    float value = -val;
+    // cout << "GetIdxFirstCross" << endl;
+    int idx_end = direction>0 ? NUM_SAMPLES-1 : 0; //set last index based on number of samples
+    // cout << "NUM_SAMPLES: " << NUM_SAMPLES << endl;
+    // cout << "idx_end: " << idx_end << endl;
+    // cout << "thresh: " << value << endl;
+    bool rising = value > v[i_st]? true : false; //set variable rising to tr/fl if amp.frac. > value of starting index
+    // cout << "rising? " << rising << endl;
+    int i = i_st; //set i as inputted starting index
+    // cout << "starting index: " << i << endl;
+    while( i != idx_end ) 
+    { 
+        if(rising && v[i] > value) break; //both if statements ensure that counter crosses thresh
+        else if( !rising && v[i] < value) break; 
+        i += direction; //i = i + direction// iterates in direction specified
+    }
+    // cout << "idx first cross: " << i << "\n"  << endl;
+    return i; //returns first index after threshold that made while loop break
+    // cout << "GetIdxFirstCross end" << endl;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
