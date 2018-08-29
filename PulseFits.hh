@@ -108,7 +108,7 @@ inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<Do
 	
 	int NEvents = good_events.size();
 	// cout << "good events size: " << NEvents << endl;
-	for(int i = 0; i < 3; i++){ 
+	for(int i = 0; i < NEvents; i++){ 
 		// cout << "linearinit for samp_max_time" << endl;
 		// samp_max_time = linearInit();
 		// cout << "get t graph" << endl;
