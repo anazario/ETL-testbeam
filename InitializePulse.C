@@ -13,59 +13,56 @@ void InitializePulse(TString file){
     // RawPulse init;
     // init.GetTree(file);
 
-    bool on = true;
 
 
     //for(int i = 0; i < 2; i++){ //set cuts for each channel
         // cout << "start" << endl;
         // RawPulse* Channel1 = new RawPulse(file, 1); //new PulseFits(...)
-        PulseFits* Channel1 = new PulseFits(file, 1, .2);
+        PulseFits* Channel1 = new PulseFits(file,1);
         // cout << "initializes function" << endl;
         Channel1->SetAmpMinimum(50, 10, 40);
-        Channel1->SetAmpMinimum(50, 10, 40);
-
         // cout << "set min amps" << endl;
         Channel1->SetAmpMaximum(160, 90, 160);
         // cout << "set max amps" << endl;
-        Channel1->SetCuts(0,1);
+        Channel1->SetCuts(0);
         // cout << "set cuts" << endl;
         // Channel1->GraphFirstEvent(on); //on if true
         // cout << "finish rawpulse" << endl;
 
 
-        std::vector<Double_t> gausCFDtimes;
-        std::vector<Double_t> gausLEtimes;
-        std::vector<Double_t> gausMeantimes;
+        std::vector<float> gausCFDtimes;
+        std::vector<float> gausLEtimes;
+        std::vector<float> gausMeantimes;
 
-        std::vector<Double_t> quadCFDtimes;
-        std::vector<Double_t> quadLEtimes;
-        std::vector<Double_t> quadMeantimes;
+        std::vector<float> quadCFDtimes;
+        std::vector<float> quadLEtimes;
+        std::vector<float> quadMeantimes;
 
-        std::vector<Double_t> linearCFDtimes;
-        std::vector<Double_t> linearLEtimes;
-        std::vector<Double_t> linearMaxtimes;
+        std::vector<float> linearCFDtimes;
+        std::vector<float> linearLEtimes;
+        std::vector<float> linearMaxtimes;
 
         std::vector<float> quadAmps;
         std::vector<float> gausAmps;
         std::vector<float> linearAmps;
 
         // cout << "fill vector with gaus times" << endl;
-        Channel1->GetTimes("gaus",.2,gausCFDtimes);
-        Channel1->GetTimes("gaus",10,gausLEtimes);
-        Channel1->GetTimes("gaus",0,gausMeantimes);
-        Channel1->GetAmps("gaus",0,gausAmps);
+        // Channel1->GetTimes("gaus",.2,gausCFDtimes);
+        // Channel1->GetTimes("gaus",10,gausLEtimes);
+        // Channel1->GetTimes("gaus",0,gausMeantimes);
+        // Channel1->GetAmps("gaus",0,gausAmps);
 
         // cout << "fill vector with quad times" << endl;
         Channel1->GetTimes("quad",.2,quadCFDtimes);
-        Channel1->GetTimes("quad",15,quadLEtimes);
-        Channel1->GetTimes("quad",0,quadMeantimes);
+        // Channel1->GetTimes("quad",15,quadLEtimes);
+        // Channel1->GetTimes("quad",0,quadMeantimes);
         Channel1->GetAmps("quad",0,quadAmps);
 
         // cout << "fill vector with linear times" << endl;
-        Channel1->GetTimes("linear",.2,linearCFDtimes);
-        Channel1->GetTimes("linear",15,linearLEtimes);
-        Channel1->GetTimes("linear",0,linearMaxtimes);
-        Channel1->GetAmps("linear",0,linearAmps);
+        // Channel1->GetTimes("linear",.2,linearCFDtimes);
+        // Channel1->GetTimes("linear",15,linearLEtimes);
+        // Channel1->GetTimes("linear",0,linearMaxtimes);
+        // Channel1->GetAmps("linear",0,linearAmps);
 
 
         // cout << "number of good gaus cfd time events: " << gausCFDtimes.size() << endl;
@@ -75,10 +72,10 @@ void InitializePulse(TString file){
         // cout << "number of good gaus amp events: " << gausAmps.size() << endl;
         // cout << "first gaus good amp: " << gausAmps[0] << endl;
 
-        // cout << "number of good quad time events: " << quadCFDtimes.size() << endl;
+        cout << "number of good quad time events: " << quadCFDtimes.size() << endl;
         // cout << "cfd of first good quad event: " << quadCFDtimes[0] << " ns" << endl;
         
-        // cout << "number of good quad amp events: " << quadAmps.size() << endl;
+        cout << "number of good quad amp events: " << quadAmps.size() << endl;
         
         // cout << "number of good linear cfd times: " << linearCFDtimes.size() << endl;
         // cout << "linear cfd of event# 22499: " << linearCFDtimes[1231] << " ns" << endl;

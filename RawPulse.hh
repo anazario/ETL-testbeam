@@ -24,9 +24,9 @@ public:
 
     virtual ~RawPulse(){ }; //destructor: releases memory
 
-    void SetAmpMinimum(double pho_min, double chan1_min, double chan2_min = -999);
-    void SetAmpMaximum(double pho_min, double chan1_min, double chan2_min = -999);
-    void SetCuts(int pho_ch, int channel_num);
+    void SetAmpMinimum(double pho_min, double chan1_min, double chan2_min);
+    void SetAmpMaximum(double pho_max, double chan1_max, double chan2_max);
+    void SetCuts(int pho_ch);
     void GraphFirstEvent(bool on = false);
 
 
@@ -65,11 +65,14 @@ private:
     std::vector<float> m_copy_time;
 
     int loc;
+    int channel_num;
+
+
     
     
     TBranch* channel_br;
     TBranch* time_br;
-    TBranch* amp_br;
+    // TBranch* amp_br;
 
     TCut m_cut_string;
 
@@ -118,6 +121,7 @@ private:
 // }
 
 inline RawPulse::RawPulse(){ 
+    cout << "error: no input file recieved" << endl;
     m_sample;
     m_time;
 }
@@ -128,20 +132,26 @@ inline RawPulse::RawPulse(){
 
 
 inline RawPulse::RawPulse(TString file, int channel){
+    cout << "Constructor" << endl;
     GetTree(file);
     SetChannel(channel);
+
     // SetSamples(m_sample[channel], m_time[0], NUM_SAMPLES);
     
 }
 
 
 inline void RawPulse::SetChannel(int channel){
+    cout << "SetChannel" << endl;
     m_channel = channel;
+    channel_num = channel;
 }
 
 inline void RawPulse::GetTree(TString file){
+    cout << "GetTree" << endl;
     runfile = TFile::Open(file);
     runtree = (TTree*)runfile->Get("pulse");
+    cout << file << endl;
     runtree->SetBranchStatus("*", 0);     
     runtree->SetBranchStatus("amp", 1);
     runtree->SetBranchStatus("i_evt", 1);                                                                                                                 
@@ -189,7 +199,8 @@ inline void RawPulse::GetTree(TString file){
 
 
 
-inline void RawPulse::SetCuts(int pho_num, int channel_num){
+inline void RawPulse::SetCuts(int pho_num){
+    cout << "SetCuts" << endl;
     TString chnum_str = to_string(channel_num);
     TString chmin_str = to_string(m_channel_min[channel_num]);
     TString chmax_str = to_string(m_channel_max[channel_num]);
@@ -205,6 +216,7 @@ inline void RawPulse::SetCuts(int pho_num, int channel_num){
     TString pho_cut_string = pho_min_cut + " && " + pho_max_cut;
 
     m_cut_string = pho_cut_string + " && " + ch_cut_string  ;
+    // cout << "cutstring: " << m_cut_string << endl;
     // cout << "setcuts: " << m_cut_string << endl;
 
     GetGoodEvents();
@@ -212,28 +224,25 @@ inline void RawPulse::SetCuts(int pho_num, int channel_num){
 
 
 inline void RawPulse::SetAmpMinimum(double pho_min, double chan1_min, double chan2_min){
-    if(chan2_min == -999){ //trigger on channel 0, one sensor
-        m_channel_min.push_back(pho_min);
-        m_channel_min.push_back(chan1_min); 
-    }
-    else{ //photek on channel 0, two sensors
+    // cout << "SetAmpMinimum" << endl;
+ //photek on channel 0, two sensors
         m_channel_min.push_back(pho_min);
         m_channel_min.push_back(chan1_min);
         m_channel_min.push_back(chan2_min); 
-    }
+    
 }
 
 
+
+
 inline void RawPulse::SetAmpMaximum(double pho_max, double chan1_max, double chan2_max){
-    if(chan2_max == -999){ //trigger on channel 0, one sensor
-        m_channel_max.push_back(pho_max);
-        m_channel_max.push_back(chan1_max); 
-    }
-    else{ //photek on channel 0, two sensors
+    // cout << "SetAmpMaximum" << endl;
+
+   //photek on channel 0, two sensors
         m_channel_max.push_back(pho_max);
         m_channel_max.push_back(chan1_max);
         m_channel_max.push_back(chan2_max); 
-    }
+    
 }
 
 
@@ -248,6 +257,7 @@ inline void RawPulse::SetAmpMaximum(double pho_max, double chan1_max, double cha
 
 
 inline void RawPulse::GetGoodEvents(){
+    // cout << "GetGoodEvents" << endl;
     if(good_events.size()>0) good_events.clear();
     // cout << "get good events" << endl;
     // cout << "cuts: " << m_cut_string << endl;
@@ -261,9 +271,7 @@ inline void RawPulse::GetGoodEvents(){
     for(int i = 0; i < nentries; i++){
         
         // cout << "getgoodevents for loop start" << endl;
-        // runtree->GetEntry(evtlist->GetEntry(i));
         // cout << "entry #" << i << endl;
-        // cout << &good_events << endl;
 
         // cout << "get entry from tree" << endl;
         good_events.push_back(evtlist->GetEntry(i));
@@ -297,10 +305,15 @@ inline void RawPulse::GraphFirstEvent(bool on){
             // cout << "start graphgoodevents for loop through good events" << endl;
             // cout << "good event # " << i << endl;
             // cout << "event #: " << good_events[i] << endl;
+            TCanvas* c = new TCanvas("scope_pulse","scope pulse",700,600);
             TGraphErrors* gr = GetTGraph(good_events[i]);
+            TString title_str = Form("%i", good_events[i]);
+            gr->SetTitle("Event " + title_str);
             // cout << "got tgraph of good event" << endl;
             gr->GetXaxis()->SetTitle("time (ns)");
             gr->GetYaxis()->SetTitle("amplitude (mV)");
+            gr->SetMarkerSize(0.5);
+            gr->SetMarkerStyle(20);
             gr->Draw();   
             // cout << "draw good event" << endl;
         }
@@ -316,7 +329,7 @@ inline void RawPulse::GraphFirstEvent(bool on){
 
 
 inline TGraphErrors* RawPulse::GetTGraph(int evt){ 
-    // cout << "get t graph start" << endl;
+    // cout << "GetTGraph" << endl;
     runtree->GetEntry(evt);      
     // cout << "event #: " << evt << endl;
     // cout << "channel #: " << m_channel << endl;
@@ -332,10 +345,6 @@ inline TGraphErrors* RawPulse::GetTGraph(int evt){
     // cout << "set null y error" << endl;
     // cout << "start gettgraph for loop" << endl;
     for ( int i = 0; i < NUM_SAMPLES; i++ ){                                                                                                                        
-        if (channel_arg[i]<xmin && channel_arg[i+1] < 0.5*channel_arg[i]){
-            xmin = channel_arg[i]; //minimum
-            loc = i; //index number of minimum
-        }
         errorX[i]       = .0;
         // cout << "set x error" << endl;
         errorY[i]       = _errorY*channel_arg[i];
@@ -345,6 +354,12 @@ inline TGraphErrors* RawPulse::GetTGraph(int evt){
         // cout << "sample number: " << i << endl;
         // cout << "time: " << time_arg[i] << endl;
         // cout << "channel flipped: " << channelFlip[i] << endl;
+        if(i>100){
+            if (channel_arg[i]<xmin && channel_arg[i+1] < 0.5*channel_arg[i]){
+                xmin = channel_arg[i]; //minimum
+                loc = i; //index number of minimum
+            }
+        }
     }
     idx_min = loc;
     // cout << "end of for loop \n" << endl;
@@ -409,11 +424,6 @@ inline int RawPulse::GetIdxFirstCross(float val, float* v,  int i_st, int direct
     return i; //returns first index after threshold that made while loop break
     // cout << "GetIdxFirstCross end" << endl;
 }
-
-
-
-
-
 
 
 
