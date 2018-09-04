@@ -301,7 +301,7 @@ inline void PulseFits::quadTimes(std::vector<float> &quadtime){
 	Double_t quad_max_loc = fquad->GetX(quadamp, quad_low_edge, quad_high_edge);
 
 	if(m_frac < 1){
-		Double_t thresh = m_frac*quadamp; //threshold value
+		float thresh = m_frac*quadamp; //threshold value
 		// cout << "gaus amp value: " << gaus_max_amp << endl;
 		// cout << "gaus cfd threshold" << thresh << " mV" << endl;
 		float quad_time_cfd = fquad->GetX(thresh, quad_low_edge, quad_max_loc);
@@ -313,7 +313,7 @@ inline void PulseFits::quadTimes(std::vector<float> &quadtime){
 
 	if(m_frac > 1){
 		// cout << "gaus le threshold: " << m_frac << " mV" << endl;
-		Double_t quad_LE_time = fquad->GetX(m_frac, quad_low_edge, quad_max_loc);
+	  float quad_LE_time = float(fquad->GetX(m_frac, quad_low_edge, quad_max_loc));
 		// cout << "gaus LE time: " << LE_time << " ns" << endl;
 		quadtime.push_back(quad_LE_time);
 	}
