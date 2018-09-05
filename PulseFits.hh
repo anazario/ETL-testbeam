@@ -124,7 +124,7 @@ inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<fl
 		}	
 		if(timetype=="quad") {
 			// cout << "quad times" << endl;
-			cout << "event #: " << good_events[i] << endl;
+			//cout << "event #: " << good_events[i] << endl;
 			quadFitAmp();
 			quadTimes(outputtimes);
 		}
@@ -226,7 +226,7 @@ inline void PulseFits::quadFitAmp(){
 	graph->Fit("fquad", "Q", " ", quad_low_edge,quad_high_edge); //change options to see fit
 	graph->Draw();
 	quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
-	cout << "quad amp: " << quadamp << endl;
+	//cout << "quad amp: " << quadamp << endl;
 	
 }
 
@@ -308,11 +308,11 @@ inline void PulseFits::quadTimes(std::vector<float> &quadtime){
 	if(m_frac < 1){
 		float thresh = m_frac*quadamp; //threshold value
 		// cout << "gaus amp value: " << gaus_max_amp << endl;
-		cout << "gaus cfd threshold: " << thresh << " mV" << endl;
+		//cout << "gaus cfd threshold: " << thresh << " mV" << endl;
 		float quad_time_cfd = fquad->GetX(thresh, quad_low_edge, quad_max_loc);
 		// Double_t exit_time_cfd = fpeak->GetX(thresh, max_loc, index_last);
 		// Double_t time_thresh = (entr_time_cfd+exit_time_cfd)/2;
-		cout << "quad cfd time: " << quad_time_cfd << " ns" << "\n" << endl;
+		//cout << "quad cfd time: " << quad_time_cfd << " ns" << "\n" << endl;
 		quadtime.push_back(quad_time_cfd);
 	}
 
