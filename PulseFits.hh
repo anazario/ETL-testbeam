@@ -104,7 +104,7 @@ inline void PulseFits::PulseInit(float fraction){
 
 
 inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<float> &outputtimes){
-	// cout << "gettimes start" << endl;
+	cout << "GetTimes" << endl;
 
 	int NEvents = good_events.size();
 	// cout << "good events size: " << NEvents << endl;
@@ -113,7 +113,7 @@ inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<fl
 		// samp_max_time = linearInit();
 		// cout << "get t graph" << endl;
 		graph = GetTGraph(good_events[i]);
-		TString title_str = Form("%i", good_events[0]);
+		TString title_str = Form("%i", good_events[i]);
 		graph->SetTitle("Event " + title_str);
 		PulseInit(fraction);
 		linearInit(m_frac);
@@ -124,11 +124,12 @@ inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<fl
 		}	
 		if(timetype=="quad") {
 			// cout << "quad times" << endl;
+			cout << "event #: " << good_events[i] << endl;
 			quadFitAmp();
 			quadTimes(outputtimes);
 		}
 		if(timetype=="linear"){
-			// cout << "event #: " << good_evßents[i] << "\n" << endl;
+			// cout << "event #: " << good_events[i] << "\n" << endl;
 			linearTimes(outputtimes);
 		}
 
@@ -136,7 +137,7 @@ inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<fl
 }	
 
 inline void PulseFits::GetAmps(TString timetype, float fraction, std::vector<float>& outputamps){
-	// cout << "gettimes start" << endl;
+	cout << "GetAmps" << endl;
 	
 	int NEvents = good_events.size();
 	// cout << "good events size: " << NEvents << endl;
@@ -188,8 +189,9 @@ inline float PulseFits::SetGraphLimit(int offset){
 
 
 inline void PulseFits::SetFitLimits(){
-	quad_low_edge = SetGraphLimit(-2);
-	quad_high_edge = SetGraphLimit(2);
+	quad_low_edge = SetGraphLimit(-6);
+	quad_high_edge = SetGraphLimit(6);
+
 	gaus_low_edge = SetGraphLimit(-8);
 	gaus_high_edge = SetGraphLimit(8);
 }
@@ -214,6 +216,7 @@ inline void PulseFits::quadFitAmp(std::vector<float> &quadAmps, bool draw_opt){
 		graph->Draw();
 	}
 	quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
+
 	quadAmps.push_back(quadamp);
 }
 
@@ -221,7 +224,9 @@ inline void PulseFits::quadFitAmp(std::vector<float> &quadAmps, bool draw_opt){
 inline void PulseFits::quadFitAmp(){
 	//fit is based on range given by max index (but fit does not start from this max)
 	graph->Fit("fquad", "Q", " ", quad_low_edge,quad_high_edge); //change options to see fit
+	graph->Draw();
 	quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
+	cout << "quad amp: " << quadamp << endl;
 	
 }
 
@@ -298,21 +303,22 @@ inline void PulseFits::gausTimes(std::vector<float> &gausTimes){
 
 
 inline void PulseFits::quadTimes(std::vector<float> &quadtime){
-	Double_t quad_max_loc = fquad->GetX(quadamp, quad_low_edge, quad_high_edge);
+	float quad_max_loc = fquad->GetX(quadamp, quad_low_edge, quad_high_edge);
 
 	if(m_frac < 1){
 		float thresh = m_frac*quadamp; //threshold value
 		// cout << "gaus amp value: " << gaus_max_amp << endl;
-		// cout << "gaus cfd threshold" << thresh << " mV" << endl;
+		cout << "gaus cfd threshold: " << thresh << " mV" << endl;
 		float quad_time_cfd = fquad->GetX(thresh, quad_low_edge, quad_max_loc);
 		// Double_t exit_time_cfd = fpeak->GetX(thresh, max_loc, index_last);
 		// Double_t time_thresh = (entr_time_cfd+exit_time_cfd)/2;
-		// cout << "gaus cfd time: " << entr_time_cfd << " ns" << endl;
+		cout << "quad cfd time: " << quad_time_cfd << " ns" << "\n" << endl;
 		quadtime.push_back(quad_time_cfd);
 	}
 
 	if(m_frac > 1){
 		// cout << "gaus le threshold: " << m_frac << " mV" << endl;
+
 	  float quad_LE_time = float(fquad->GetX(m_frac, quad_low_edge, quad_max_loc));
 		// cout << "gaus LE time: " << LE_time << " ns" << endl;
 		quadtime.push_back(quad_LE_time);
@@ -351,7 +357,7 @@ inline void PulseFits::linearTimes(std::vector<float> &linTimes){
 	    // cout << "slope: " << slope << endl;
 	    float b = flinear->GetParameter(1);
 	    // cout << "intercept: " << b << endl;
-	    Double_t lin_CFD = (m_frac - b)/slope;
+	    float lin_CFD = (m_frac - b)/slope;
 	    // cout << "linear cfd time: " << lin_CFD << " ns \n" << endl;
 	    linTimes.push_back(lin_CFD);
 	}
@@ -360,7 +366,7 @@ inline void PulseFits::linearTimes(std::vector<float> &linTimes){
 		// cout << "linear le time" << endl;
 		float slope = flinear->GetParameter(0);
 	    float b = flinear->GetParameter(1);
-	    Double_t lin_LE = (m_frac - b)/slope;
+	    float lin_LE = (m_frac - b)/slope;
 	    linTimes.push_back(lin_LE);
 	}
 
