@@ -189,8 +189,8 @@ inline float PulseFits::SetGraphLimit(int offset){
 
 
 inline void PulseFits::SetFitLimits(){
-	quad_low_edge = SetGraphLimit(-6);
-	quad_high_edge = SetGraphLimit(6);
+	quad_low_edge = SetGraphLimit(-8);
+	quad_high_edge = SetGraphLimit(8);
 
 	gaus_low_edge = SetGraphLimit(-8);
 	gaus_high_edge = SetGraphLimit(8);
