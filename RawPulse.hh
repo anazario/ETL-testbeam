@@ -36,20 +36,20 @@ public:
 protected:
     TTree* runtree;
     TFile* runfile;
+    TString m_file;
+
     int m_channel;
     float m_sample[NUM_CHANNELS][NUM_SAMPLES]; 
     float m_time[NUM_CHANNELS][NUM_SAMPLES];
     int idx_min;
-    void GetGoodEvents();
+    int NEvents;
+    
     TGraphErrors* GetTGraph(int evt);
     std::vector<int> good_events;
     int GetIdxFirstCross(float value, float* v,  int i_st, int direction=+1);
-    void linearInit(float amp_frac=0);
     Double_t max_samp_amp;
 
-    float t_val_max;
-    float t_val_min;
-    float t_samp_max;
+
 
     
 
@@ -67,7 +67,7 @@ private:
     int loc;
     int channel_num;
 
-
+    void GetGoodEvents();
     
     
     TBranch* channel_br;
@@ -132,8 +132,9 @@ inline RawPulse::RawPulse(){
 
 
 inline RawPulse::RawPulse(TString file, int channel){
-    cout << "Constructor" << endl;
+    // cout << "Constructor" << endl;
     GetTree(file);
+    m_file = file;
     SetChannel(channel);
 
     // SetSamples(m_sample[channel], m_time[0], NUM_SAMPLES);
@@ -142,56 +143,30 @@ inline RawPulse::RawPulse(TString file, int channel){
 
 
 inline void RawPulse::SetChannel(int channel){
-    cout << "SetChannel" << endl;
+    // cout << "SetChannel" << endl;
     m_channel = channel;
     channel_num = channel;
 }
 
 inline void RawPulse::GetTree(TString file){
-    cout << "GetTree" << endl;
+    // cout << "GetTree" << endl;
     runfile = TFile::Open(file);
     runtree = (TTree*)runfile->Get("pulse");
-    cout << file << endl;
+    // cout << file << endl;
     runtree->SetBranchStatus("*", 0);     
     runtree->SetBranchStatus("amp", 1);
-    runtree->SetBranchStatus("i_evt", 1);                                                                                                                 
+    runtree->SetBranchStatus("i_evt", 1);
+    runtree->SetBranchStatus("event",1);                                                                                                                 
     runtree->SetBranchStatus("channel", 1);
     runtree->SetBranchStatus("time", 1);
     runtree->SetBranchAddress("channel", m_sample, &channel_br);
     runtree->SetBranchAddress("time", m_time, &time_br);
-   
-    // runtree->SetBranchAddress("amp",amp_samp, &amp_br);
 }
 
-//SetBranchAddress fills m_sample with samples from branches
-// inline void RawPulse::SetSamples(float* sample, float* time, int NSAMPLES, bool copy = false){
-//     if(!copy){
-//         m_sample = sample;
-//         m_time = time;
-//         NUM_SAMPLES = NSAMPLES;
 
-//         if(NUM_SAMPLES < 0){
-//             NUM_SAMPLES = 0;
-//         }
 
-//         NUM_SAMPLES = ((NUM_SAMPLES < 0) ? 0 : NUM_SAMPLES);
 
-//         m_copy_sample.clear();
-//         m_copy_time.clear();
-//     } else {
-//         m_sample;
-//         m_time  ;
-//         NUM_SAMPLES = 0;
 
-//         m_copy_sample.clear();
-//         m_copy_time.clear();
-
-//         for(int i = 0; i < NSAMPLES; i++){
-//             m_copy_sample.push_back(sample[i]);
-//             m_copy_time.push_back(time[i]);
-//         }
-//     }
-// }
 
 
 
@@ -200,7 +175,7 @@ inline void RawPulse::GetTree(TString file){
 
 
 inline void RawPulse::SetCuts(int pho_num){
-    cout << "SetCuts" << endl;
+    // cout << "SetCuts" << endl;
     TString chnum_str = to_string(channel_num);
     TString chmin_str = to_string(m_channel_min[channel_num]);
     TString chmax_str = to_string(m_channel_max[channel_num]);
@@ -267,7 +242,7 @@ inline void RawPulse::GetGoodEvents(){
     // cout << "get eventlist" << endl;
     int nentries = evtlist->GetN();
     // cout << "get size of event list" << endl;
-    //cout << nentries << endl;
+    // cout << "nentries: " << nentries << endl;
     for(int i = 0; i < nentries; i++){
         
         // cout << "getgoodevents for loop start" << endl;
@@ -279,11 +254,7 @@ inline void RawPulse::GetGoodEvents(){
 
         // cout << "good event number: " << list->GetEntry(i) << endl;
     }
-    //std::cout << good_events << std::endl;
-    // evtlist->Delete();
-    // return good_events;
-    // cout << good_events[0] << endl;
-    // cout << "number of good events: " << good_events.size() << endl;
+    NEvents = good_events.size();
 }
 
 
@@ -296,10 +267,8 @@ inline void RawPulse::GetGoodEvents(){
 
 inline void RawPulse::GraphFirstEvent(bool on){
     if(on){
-        // std::vector<int> good_events = GetGoodEvents();
         cout << "graph first pulse" << endl;
-        // int NEvents = good_events.size();
-        // cout << "set good events size = " << NEvents << endl;
+        // cout << "good events size = " << good_events.size() << endl;
         // cout << "good event 0 = " << good_events[1] << endl;
         for(int i = 0; i < 1; i++){ //set amount of events to graph
             // cout << "start graphgoodevents for loop through good events" << endl;
@@ -314,7 +283,7 @@ inline void RawPulse::GraphFirstEvent(bool on){
             gr->GetYaxis()->SetTitle("amplitude (mV)");
             gr->SetMarkerSize(0.5);
             gr->SetMarkerStyle(20);
-            gr->Draw();   
+            gr->Draw("AP");   
             // cout << "draw good event" << endl;
         }
     }
@@ -363,7 +332,6 @@ inline TGraphErrors* RawPulse::GetTGraph(int evt){
     }
     idx_min = loc;
     // cout << "end of for loop \n" << endl;
-    // cout << "index of minimum: " << idx_min << endl;
     max_samp_amp = channelFlip[idx_min];
     // cout << "amplitude of idx_min: " << max_samp_amp << endl;
     // cout << "sample 316: " << channelFlip[316] << endl;
@@ -380,22 +348,7 @@ inline TGraphErrors* RawPulse::GetTGraph(int evt){
 
 
 
-inline void RawPulse::linearInit(float amp_frac){ 
-//if direction + amp_frac are set to 0, find the time of the max sample
-//if direction + amp_frac != 0, find time of crossing index
-    // cout << "linearinit start" << endl;
-        float thresh = max_samp_amp*amp_frac;
-        // cout << "max_samp_amp: " << max_samp_amp << endl;
-        int i_start = GetIdxFirstCross(thresh, m_sample[m_channel], idx_min, -1);
-        int i_end = GetIdxFirstCross(thresh, m_sample[m_channel], i_start, +1); 
-        //find time value of samples
-        t_val_min = m_time[0][i_start];
-        t_val_max = m_time[0][i_end];
-        // cout << "end time: " << t_val_max << endl;
-        // cout << "start time: " << t_val_min << "\n" << endl;
-        t_samp_max = m_time[0][idx_min];
-        // cout << "time of max amplitude: " << t_max << " ns" << endl;
-}
+
 
 
 
