@@ -13,7 +13,7 @@ void InitializePulse(TString file){
     std::vector<float> gausLEtimes;
     std::vector<float> gausMeantimes;
 
-    std::vector<float> quadCFDtimes;
+    std::vector<Double_t> quadCFDtimes;
     std::vector<float> quadLEtimes;
     std::vector<float> quadMeantimes;
 
@@ -24,7 +24,7 @@ void InitializePulse(TString file){
     std::vector<float> linearLEtimes;
     std::vector<float> linearMaxtimes;
 
-    std::vector<float> quadAmps;
+    std::vector<Double_t> quadAmps;
     std::vector<float> gausAmps;
     std::vector<float> linearAmps;
 
@@ -68,15 +68,22 @@ void InitializePulse(TString file){
             // cout << "return amps" << endl;
             // Channel1->ReturnAmps("quadratic",quadAmps);
             cout << "SetPreferences" << endl;
-            Channel1->Initialize(0.2,"CFD","upper");
-            Channel1->SetInterpolation("gaussian","linear"); //amps first then times
+            Channel1->Initialize(0.5,"CFD","lower");
+            Channel1->GraphFits(off);
+            Channel1->SetInterpolation("quadratic","quadratic"); //amps first then times
             cout << "FillTimesFillAmps" << endl;
             Channel1->FillTimesFillAmps(quadAmps,quadCFDtimes);
+            
 
             cout << "size of quadamps: " << quadAmps.size() << endl;
-            cout << "quad amp of first event: " << quadAmps[0] << endl;
+            // for(int i = 0; i < quadAmps.size();i++){
+            //     cout << "quad amp entry # " << i << ": " << quadAmps[i] << endl;
+            // }
+            
             cout << "size of quadCFDtimes: " << quadCFDtimes.size() << endl;
+           
             cout << "time of first event: " << quadCFDtimes[0] << endl;
+            // cout << "time of error event: " << quadCFDtimes[5] << endl;
             
 
 

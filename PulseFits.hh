@@ -21,8 +21,9 @@ public:
 	void SetThreshold(TString bound, float amp, float thresh=-999);
 	void SetInterpolation(TString timetype_amp, TString timetype_time);
 	void Initialize(float thresh_val, TString method, TString bound);
+	void GraphFits(bool draw_opt);
 
-	void FillTimesFillAmps(std::vector<float>& outputamps, std::vector<float>& outputtimes);
+	void FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes);
 
 
 
@@ -36,12 +37,13 @@ private:
 	TString time_interp;
 	TString pf_bound;
 	TString pf_method;
-	float pf_thresh;
-	float pf_thresh_val;
+	Double_t pf_thresh;
+	Double_t pf_thresh_val;
 	TGraphErrors* m_graph;
+	bool pf_draw;
 
 	void SetTGraph(int evt);
-	void SetThreshold(float amp);
+	void SetThreshold(Double_t amp);
 
 
 	
@@ -58,6 +60,7 @@ private:
 
 inline void PulseFits::SetTGraph(int evt){
 	m_graph = GetTGraph(evt);
+
 }
 
 inline void PulseFits::Initialize(float thresh_val, TString method, TString bound){
@@ -71,9 +74,11 @@ inline void PulseFits::Initialize(float thresh_val, TString method, TString boun
 
 
 
-inline void PulseFits::SetThreshold(float amp){
+inline void PulseFits::SetThreshold(Double_t amp){
 	if(pf_method == "CFD"){
 		pf_thresh = pf_thresh_val*amp;
+		cout << "amp value: " << amp << endl;
+		cout << "pf_thresh: " << pf_thresh << endl;
 	}
 	else if(pf_method == "LE"){
 		pf_thresh = pf_thresh_val;	
@@ -101,21 +106,41 @@ inline void PulseFits::SetInterpolation(TString timetype_amp, TString timetype_t
 	}
 	else{
 		cout << "error: invalid interpolation specified" << endl;
+		exit(1);
 	}
 }
 	
 
 
+inline void PulseFits::GraphFits(bool draw_opt){
+	pf_draw = draw_opt;
+}
 
 
-inline void PulseFits::FillTimesFillAmps(std::vector<float>& outputamps, std::vector<float>& outputtimes){
-	for(int i = 0; i < 1; i++){ //NEvents
+
+
+
+inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes){
+	for(int i = 0; i < NEvents; i++){ //NEvents
+		// cout << "Event #: " << good_events[i] << endl;
 		SetTGraph(good_events[i]);
-		ReturnAmps(m_graph,amp_interp,outputamps);
-		
-		SetThreshold(outputamps[i]);
+		if(i==1){
+			if(pf_draw){
+				TString evt_str = Form("%i", good_events[i]);
+				m_graph->SetTitle("Event " + evt_str);
+				m_graph->GetXaxis()->SetTitle("time (ns)");
+				m_graph->GetYaxis()->SetTitle("amplitude (mV)");
+				m_graph->Draw("AP");
+			}
+		}
+		ReturnAmps(m_graph,amp_interp,outputamps,pf_draw);
 
-		ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound);
+		SetThreshold(outputamps[i]);
+		cout << "outputamps entry # "<< i << ": " << outputamps[i] << endl;
+		ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound,pf_draw,good_events[i]);
+	
+			
+		
 	}
 }
 

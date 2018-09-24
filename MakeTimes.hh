@@ -8,28 +8,32 @@ public:
 	MakeTimes(TString file, int channel) : RawPulse(file, channel){ };
 	virtual ~MakeTimes(){ };
 
-	void ReturnTimes(TGraphErrors* gr, std::vector<float>& output_times, float thresh, TString input_interp,TString method,TString bound);
+	void ReturnTimes(TGraphErrors* gr, std::vector<Double_t>& output_times, Double_t thresh, TString input_interp,TString method,TString bound,bool draw_opt, int evt);
 	
 protected:
 
 
 private:
 
-	std::vector<Double_t> quadpoints;
 
 	TGraphErrors* m_graph;
 	TString m_bound;
 	float m_thresh;
 	TString m_method;
+	bool m_draw;
+
+	Double_t x1; Double_t y1;
+	Double_t x2; Double_t y2;
+	Double_t x3; Double_t y3;
 
 	void SetThresholdSetMethod(float thresh, TString method);
 	void SetFitPoints();
-	void SetCoeff(TF1* func, std::vector<Double_t> input_pts);
+	void SetCoeff(TF1* func);
 	void SetFitPoints(TString bound=" ");
 
-	void quadTimes(std::vector<float> &quadtime);
-	void gausTimes(std::vector<float> &gausTimes);
-	void linearTimes(std::vector<float>& linTimes);
+	void quadTimes(std::vector<Double_t> &quadtime);
+	void gausTimes(std::vector<Double_t> &gausTimes);
+	void linearTimes(std::vector<Double_t>& linTimes);
 	void SetTGraph(TGraphErrors* gr);
 
 };
@@ -54,72 +58,60 @@ inline void MakeTimes::SetFitPoints(TString bound){
 
 	int i_left = GetIdxFirstCross(m_thresh, m_sample[m_channel], idx_min, -1);
 	int i_right = GetIdxFirstCross(m_thresh,m_sample[m_channel],i_left,+1);
-		// cout << 'b' << endl;
 
-	Double_t x1; Double_t y1;
-	Double_t x2; Double_t y2;
-	Double_t x3; Double_t y3;
-		// cout << 'c' << endl;
-
-	if(bound == "upper"){
-
-		m_graph->GetPoint(i_left, x1, y1);
-		quadpoints.push_back(x1);
-		quadpoints.push_back(y1);
-	// cout << 'd' << endl;
-
-		m_graph->GetPoint(i_right, x2, y2);
-		quadpoints.push_back(x2);
-		quadpoints.push_back(y2);
-
-		m_graph->GetPoint(i_right+1, x3, y3);
-		quadpoints.push_back(x3);
-		quadpoints.push_back(y3);
-	}
 	
-	if(bound=="lower"){
 
-		m_graph->GetPoint(i_left-1, x1, y1);
-		quadpoints.push_back(x1);
-		quadpoints.push_back(y1);
+		if(bound == "upper"){
 
-		m_graph->GetPoint(i_left, x2, y2);
-		quadpoints.push_back(x2);
-		quadpoints.push_back(y2);
+			m_graph->GetPoint(i_left, x1, y1);
+	
 
-		m_graph->GetPoint(i_right, x3, y3);
-		quadpoints.push_back(x3);
-		quadpoints.push_back(y3);
-
-	}
-
-	if(bound=="linear"){
-		m_graph->GetPoint(i_left, x1, y1);
-		quadpoints.push_back(x1);
-		quadpoints.push_back(x1);
-
-		m_graph->GetPoint(i_right, x2, y2);
-		quadpoints.push_back(x2);
-		quadpoints.push_back(x2);	
-	}
+			m_graph->GetPoint(i_right, x2, y2);
 
 
+			m_graph->GetPoint(i_right+1, x3, y3);
+			
+		}
+		
+		if(bound=="lower"){
 
-	else if(bound==" "){
-		cout << "no bound specified" << endl;
-	}
+			m_graph->GetPoint(i_left-1, x1, y1);
+
+
+			m_graph->GetPoint(i_left, x2, y2);
+	
+
+			m_graph->GetPoint(i_right, x3, y3);
+
+
+		}
+
+		if(bound=="linear"){
+			m_graph->GetPoint(i_left, x1, y1);
+	
+
+			m_graph->GetPoint(i_right, x2, y2);
+	
+		}
+
+
+
+		else if(bound==" "){
+			cout << "no bound specified" << endl;
+		}
+		
 }
 
-inline void MakeTimes::SetCoeff(TF1* func, std::vector<Double_t> input_pts){
-	float x1 = input_pts[0]; float y1 = input_pts[1];
-	float x2 = input_pts[2]; float y2 = input_pts[3];
-	float x3 = input_pts[4]; float y3 = input_pts[5];
+inline void MakeTimes::SetCoeff(TF1* func){
 
 
-	float DEN = (x1-x2)*(x1-x3)*(x3-x2);
-	float a_coeff = (y1*(x3-x2) + y2*(x1-x3) + y3*(x2-x1))/DEN;
-	float b_coeff = (y1*(x2*x2-x3*x3) + y2*(x3*x3-x1*x1) + y3*(x1*x1-x2*x2))/DEN;
-	float c_coeff = (y1*x2*x3*(x3-x2) + y2*x1*x3*(x1-x3) + y3*x1*x2*(x2-x1))/DEN; 
+	Double_t DEN = (x1-x2)*(x1-x3)*(x3-x2);
+	Double_t a_coeff = (y1*(x3-x2) + y2*(x1-x3) + y3*(x2-x1))/DEN;
+	Double_t b_coeff = (y1*(x2*x2-x3*x3) + y2*(x3*x3-x1*x1) + y3*(x1*x1-x2*x2))/DEN;
+	Double_t c_coeff = (y1*x2*x3*(x3-x2) + y2*x1*x3*(x1-x3) + y3*x1*x2*(x2-x1))/DEN; 
+
+
+
 
 	func->SetParameter(2,a_coeff);
 	func->SetParameter(1,b_coeff);
@@ -127,19 +119,23 @@ inline void MakeTimes::SetCoeff(TF1* func, std::vector<Double_t> input_pts){
 }
 
 
-inline void MakeTimes::quadTimes(std::vector<float> &quadtime){
+inline void MakeTimes::quadTimes(std::vector<Double_t> &quadtime){
 	SetFitPoints(m_bound);
-	Double_t quad_low_edge = quadpoints[0];
-	Double_t quad_high_edge = quadpoints[4];
+	Double_t quad_low_edge = x1;
+	Double_t quad_high_edge = x3;
 	TF1* fquad = new TF1("fquad","pol2(0)", quad_low_edge, quad_high_edge);
-	SetCoeff(fquad, quadpoints);
+	SetCoeff(fquad);
 
+	// m_graph->Fit("fquad","Q"," ",quad_low_edge,quad_high_edge);
 	m_graph->SetMarkerSize(0.7);
 	m_graph->SetMarkerStyle(20);
     fquad->SetLineColor(4);
 	fquad->SetLineWidth(3);
 	// m_graph->Draw("AP");
-	fquad->Draw("sames");
+	if(m_draw){
+		fquad->Draw("sames");
+	}
+	
 
 	if(m_method=="MAX"){
 		Double_t meantime = fquad->GetParameter(1);
@@ -162,7 +158,7 @@ inline void MakeTimes::quadTimes(std::vector<float> &quadtime){
 
 
 
-inline void MakeTimes::linearTimes(std::vector<float>& linTimes){ 
+inline void MakeTimes::linearTimes(std::vector<Double_t>& linTimes){ 
 	
 	SetFitPoints(m_bound);
     int i_start = GetIdxFirstCross(m_thresh, m_sample[m_channel], idx_min, -1);
@@ -176,7 +172,10 @@ inline void MakeTimes::linearTimes(std::vector<float>& linTimes){
     flinear->SetLineWidth(3);
 	m_graph->Fit("flinear","Q"," ",t_val_min,t_val_max);
     // m_graph->Draw("AP");
-    // flinear->Draw("sames");
+    if(m_draw){
+    	flinear->Draw("sames");
+    }
+    
 
 	float slope = flinear->GetParameter(1);
 	float b = flinear->GetParameter(0);
@@ -203,20 +202,21 @@ inline void MakeTimes::linearTimes(std::vector<float>& linTimes){
 
 
 
-inline void MakeTimes::gausTimes(std::vector<float> &gausTimes){
+inline void MakeTimes::gausTimes(std::vector<Double_t> &gausTimes){
 	Double_t gaus_low_edge; Double_t gaus_high_edge; Double_t y1; Double_t y2;
 	
 
 
 	m_graph->GetPoint(idx_min-8, gaus_low_edge, y1);
 	m_graph->GetPoint(idx_min+8, gaus_high_edge, y2);
-		cout << "gaus_low_edge: " << gaus_low_edge << endl;
-		cout << "gaus_high_edge: " << gaus_high_edge << endl;
 	TF1* fpeak = new TF1("fpeak","gaus", gaus_low_edge, gaus_high_edge);
 	fpeak->SetLineColor(4);
 	m_graph->Fit("fpeak","Q"," ",gaus_low_edge,gaus_high_edge);
 	// m_graph->Draw("AP");
-	// // fpeak->Draw("sames");
+	if(m_draw){
+		fpeak->Draw("sames");
+	}
+	
 
 
 	float max_loc = fpeak->GetMaximum(gaus_low_edge, gaus_high_edge);
@@ -236,26 +236,38 @@ inline void MakeTimes::gausTimes(std::vector<float> &gausTimes){
 
 
 
-inline void MakeTimes::ReturnTimes(TGraphErrors* gr, std::vector<float>& output_times, float thresh, TString input_interp,TString method,TString bound){
+inline void MakeTimes::ReturnTimes(TGraphErrors* gr, std::vector<Double_t>& output_times, Double_t thresh, TString input_interp,TString method,TString bound,bool draw_opt, int evt){
+		m_draw = draw_opt;
 		SetTGraph(gr);
 		SetThresholdSetMethod(thresh,method);
-		SetFitPoints(bound);
-		
-
-		if(input_interp == "quadratic"){
-			quadTimes(output_times);
+		if(m_thresh > -m_sample[m_channel][idx_min]){
+			cout << "Event #: " << evt << endl;
+			cout << "threshold: " << m_thresh << endl;
+			cout << "maximum amplitude: " << -m_sample[m_channel][idx_min] << endl;
+			cerr << "error: threshold above pulse maximum" << endl;
+			output_times.push_back(-999);	
 		}
-
-		else if(input_interp == "gaussian"){
-			gausTimes(output_times);
-		}
-		else if(input_interp == "linear"){
-			linearTimes(output_times);
+		else if(abs(m_thresh) < 0){
+			cerr << "error: negative threshold specified" << endl;
+			exit(1);
 		}
 		else{
-			cout << "error: incorrect or no interpolation specified" << endl;
+			SetFitPoints(bound);
+			if(input_interp == "quadratic"){
+				quadTimes(output_times);
+			}
+
+			else if(input_interp == "gaussian"){
+				gausTimes(output_times);
+			}
+			else if(input_interp == "linear"){
+				linearTimes(output_times);
+			}
+			else{
+				cout << "error: incorrect or no interpolation specified" << endl;
+			}
 		}
-	// }
+
 
 }
 
