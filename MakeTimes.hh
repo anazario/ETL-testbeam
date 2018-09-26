@@ -94,6 +94,11 @@ inline void MakeTimes::SetFitPoints(TString bound){
 	
 		}
 
+		if(m_method=="MAX"){
+			m_graph->GetPoint(idx_min-1,x1,y1);
+			m_graph->GetPoint(idx_min,x2,y2);
+			m_graph->GetPoint(idx_min+1,x3,y3);
+		}
 
 
 		else if(bound==" "){
@@ -138,7 +143,10 @@ inline void MakeTimes::quadTimes(std::vector<Double_t> &quadtime){
 	
 
 	if(m_method=="MAX"){
-		Double_t meantime = fquad->GetParameter(1);
+		// Double_t max_val = fquad->GetMaximum(quad_low_edge,quad_high_edge);
+		//try setting max_val to manual zero first derivative value
+		Double_t meantime = fquad->GetMaximumX(quad_low_edge,quad_high_edge);
+		cout << "meantime maketimes: " << meantime << endl;
 		quadtime.push_back(meantime);
 	}
 	else if(m_method=="LE" || m_method == "CFD"){

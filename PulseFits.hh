@@ -77,8 +77,6 @@ inline void PulseFits::Initialize(float thresh_val, TString method, TString boun
 inline void PulseFits::SetThreshold(Double_t amp){
 	if(pf_method == "CFD"){
 		pf_thresh = pf_thresh_val*amp;
-		cout << "amp value: " << amp << endl;
-		cout << "pf_thresh: " << pf_thresh << endl;
 	}
 	else if(pf_method == "LE"){
 		pf_thresh = pf_thresh_val;	
@@ -124,22 +122,28 @@ inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std:
 	for(int i = 0; i < NEvents; i++){ //NEvents
 		// cout << "Event #: " << good_events[i] << endl;
 		SetTGraph(good_events[i]);
-		if(i==1){
+		if(i==0){
+			// pf_draw=true;
 			if(pf_draw){
 				TString evt_str = Form("%i", good_events[i]);
 				m_graph->SetTitle("Event " + evt_str);
 				m_graph->GetXaxis()->SetTitle("time (ns)");
 				m_graph->GetYaxis()->SetTitle("amplitude (mV)");
+				m_graph->GetXaxis()->SetLimits((idx_min/10)-1,(idx_min/10)+1);
 				m_graph->Draw("AP");
 			}
+			ReturnAmps(m_graph,amp_interp,outputamps,pf_draw);
+			SetThreshold(outputamps[i]);
+			ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound,pf_draw,good_events[i]);
 		}
-		ReturnAmps(m_graph,amp_interp,outputamps,pf_draw);
+		else{
+			pf_draw=false;
+			ReturnAmps(m_graph,amp_interp,outputamps,pf_draw);
 
-		SetThreshold(outputamps[i]);
-		cout << "outputamps entry # "<< i << ": " << outputamps[i] << endl;
-		ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound,pf_draw,good_events[i]);
-	
-			
+			SetThreshold(outputamps[i]);
+			ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound,pf_draw,good_events[i]);
+
+		}
 		
 	}
 }

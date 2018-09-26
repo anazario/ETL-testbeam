@@ -80,10 +80,8 @@ inline void MakeAmps::SetCoeff(TF1* func){
 inline void MakeAmps::quadAmp(std::vector<Double_t> &quadAmps){
 	Double_t quad_low_edge = SetGraphLimit(-1);
 	Double_t quad_high_edge = SetGraphLimit(1);
-
-	cout << "quad_low_edge: " << quad_low_edge << endl;
-	cout << "quad_high_edge: " << quad_high_edge << endl;
 	TF1* fquad = new TF1("fquad","pol2(0)", quad_low_edge, quad_high_edge);
+	fquad->SetNpx(1000);
 	SetCoeff(fquad);
 	
 
@@ -97,11 +95,9 @@ inline void MakeAmps::quadAmp(std::vector<Double_t> &quadAmps){
 	if(m_draw){
 		fquad->Draw("sames");
 	}
-	cout << fquad->GetParameter(2) << " " << fquad->GetParameter(1) << " " << fquad->GetParameter(0) << endl;
 	
 
 	Double_t quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
-	cout << "quadamp: " << quadamp << endl;
 	quadAmps.push_back(quadamp);
 
 }
