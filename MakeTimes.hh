@@ -227,7 +227,10 @@ inline void MakeTimes::gausTimes(std::vector<Double_t> &gausTimes){
 	
 
 
-	float max_loc = fpeak->GetMaximum(gaus_low_edge, gaus_high_edge);
+
+	float max_val = fpeak->GetMaximum(gaus_low_edge, gaus_high_edge); //y-val of max amp.
+	float max_loc = fpeak->GetX(max_val,gaus_low_edge,gaus_high_edge); //x-val of max. amp.
+	
 	if(m_method=="MAX"){
 		Double_t meantime = fpeak->GetParameter(1);
 		gausTimes.push_back(meantime);

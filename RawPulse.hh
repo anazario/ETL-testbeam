@@ -34,8 +34,7 @@ public:
 
 
 protected:
-    TTree* runtree;
-    TFile* runfile;
+ 
     TString m_file;
 
     int m_channel;
@@ -57,7 +56,8 @@ private:
 
  //pointer to first element in array
     // int NUM_SAMPLES;
-
+   TTree* runtree;
+    TFile* runfile;
     std::vector<double> m_channel_min;
     std::vector<double> m_channel_max;
     
@@ -190,7 +190,7 @@ inline void RawPulse::SetCuts(int pho_num){
     TString pho_max_cut = "amp[" + pho_ch + "] < " + phomax_str;
     TString pho_cut_string = pho_min_cut + " && " + pho_max_cut;
 
-    m_cut_string = pho_cut_string + " && " + ch_cut_string  ;
+    m_cut_string = pho_cut_string + " && " + ch_cut_string;
     // cout << "cutstring: " << m_cut_string << endl;
     // cout << "setcuts: " << m_cut_string << endl;
 
@@ -249,7 +249,7 @@ inline void RawPulse::GetGoodEvents(){
         // cout << "entry #" << i << endl;
 
         // cout << "get entry from tree" << endl;
-        good_events.push_back(evtlist->GetEntry(i));
+        good_events.push_back(evtlist->GetEntry(i)); //gets entry for all channels
         // cout << "add good entry to good_events" << endl;
 
         // cout << "good event number: " << list->GetEntry(i) << endl;
@@ -369,11 +369,13 @@ inline int RawPulse::GetIdxFirstCross(float val, float* v,  int i_st, int direct
     // cout << "starting index: " << i << endl;
     while( i != idx_end ) 
     { 
+        // cout << "current index: " << i << endl;
         if(rising && v[i] > value) break; //both if statements ensure that counter crosses thresh
         else if( !rising && v[i] < value) break; 
         i += direction; //i = i + direction// iterates in direction specified
     }
     // cout << "idx first cross: " << i << "\n"  << endl;
+    
     return i; //returns first index after threshold that made while loop break
     // cout << "GetIdxFirstCross end" << endl;
 }

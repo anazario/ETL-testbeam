@@ -4,7 +4,7 @@
 // #include "MakeTimes.hh"
 // #include "MakeAmps.hh"
 
-// #define NUM_CHANNELS 4
+#define NUM_CHANNELS 4
 // #define NUM_SAMPLES 1000
 
 // #include "RawPulse.hh"
@@ -24,6 +24,7 @@ public:
 	void GraphFits(bool draw_opt);
 
 	void FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes);
+	void MakeBranches(TFile* newfile, int ch, std::vector<double> input_vector);
 
 
 
@@ -33,6 +34,7 @@ protected:
 
 private:
 	
+
 	TString amp_interp;
 	TString time_interp;
 	TString pf_bound;
@@ -57,6 +59,40 @@ private:
 
 #endif
 
+
+inline void PulseFits::MakeBranches(TFile* newfile, int ch, std::vector<double> input_vector){
+   	newfile->ReOpen("UPDATE");
+    TTree* newtree = (TTree*)newfile->Get("evtTree");
+    TString teststring = Form("test[%i]",ch);
+
+	
+    int num_evts = input_vector.size();
+    cout << "num_evts: " << num_evts << endl;
+    Double_t i_fill[NUM_CHANNELS];
+
+
+    newtree->Branch("test", &i_fill[0],Form("test[%d]/D",NUM_CHANNELS));
+    newtree->Scan(teststring);
+
+
+    for(int i = 0; i < num_evts; i++){
+    	// cout << "entry #: " << i << endl;
+    	// cout << "point a" << endl;
+    	// cout << "input_vector entry value: " << input_vector[i] << endl;
+        i_fill[ch] = input_vector[i];
+    	// }
+        cout << "input_vector entry " << i << ": " << input_vector[i] << endl;
+    	// cout << "point b" << endl;
+       	newtree->Fill();
+
+    	// cout << "point c" << endl;
+	}
+	newtree->Write();
+
+
+	newtree->Scan(teststring);
+	// newtree->Draw(teststring);
+}
 
 inline void PulseFits::SetTGraph(int evt){
 	m_graph = GetTGraph(evt);
@@ -119,7 +155,7 @@ inline void PulseFits::GraphFits(bool draw_opt){
 
 
 inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes){
-	for(int i = 0; i < NEvents; i++){ //NEvents
+	for(int i = 0; i < 5; i++){ //NEvents
 		// cout << "Event #: " << good_events[i] << endl;
 		SetTGraph(good_events[i]);
 		if(i==0){
