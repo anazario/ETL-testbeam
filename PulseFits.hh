@@ -124,11 +124,8 @@ inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<fl
 		}	
 		if(timetype=="quad") {
 			// cout << "quad times" << endl;
-<<<<<<< HEAD
-			//cout << "event #: " << good_events[i] << endl;
-=======
 			// cout << "event #: " << good_events[i] << endl;
->>>>>>> 379272c53222e7e88246ee6a9ec4e3e1925575df
+
 			quadFitAmp();
 			quadTimes(outputtimes);
 		}
@@ -236,11 +233,9 @@ inline void PulseFits::quadFitAmp(){
 	//fit is based on range given by max index (but fit does not start from this max)
 	graph->Fit("fquad", "Q", " ", quad_low_edge,quad_high_edge); //change options to see fit
 	quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
-<<<<<<< HEAD
-	//cout << "quad amp: " << quadamp << endl;
-=======
+
 	// cout << "quad amp: " << quadamp << endl;
->>>>>>> 379272c53222e7e88246ee6a9ec4e3e1925575df
+
 	
 }
 
@@ -324,21 +319,13 @@ inline void PulseFits::quadTimes(std::vector<float> &quadtime){
 
 	if(m_frac < 1){
 		float thresh = m_frac*quadamp; //threshold value
-<<<<<<< HEAD
-		// cout << "gaus amp value: " << gaus_max_amp << endl;
-		//cout << "gaus cfd threshold: " << thresh << " mV" << endl;
-		float quad_time_cfd = fquad->GetX(thresh, quad_low_edge, quad_max_loc);
-		// Double_t exit_time_cfd = fpeak->GetX(thresh, max_loc, index_last);
-		// Double_t time_thresh = (entr_time_cfd+exit_time_cfd)/2;
-		//cout << "quad cfd time: " << quad_time_cfd << " ns" << "\n" << endl;
-=======
+
 		// cout << "quad amp value: " << gaus_max_amp << endl;
 		// cout << "quad cfd threshold: " << thresh << " mV" << endl;
 		float quad_time_cfd = fquad->GetX(thresh, quad_low_edge, quad_max_loc);
 		// Double_t exit_time_cfd = fpeak->GetX(thresh, max_loc, index_last);
 		// Double_t time_thresh = (entr_time_cfd+exit_time_cfd)/2;
 		// cout << "quad cfd time: " << quad_time_cfd << " ns" << "\n" << endl;
->>>>>>> 379272c53222e7e88246ee6a9ec4e3e1925575df
 		quadtime.push_back(quad_time_cfd);
 	}
 
@@ -391,7 +378,7 @@ inline void PulseFits::linearTimes(std::vector<float> &linTimes){
 	    float lin_CFD = (thresh - b)/slope;
 	    // cout << "linear cfd time: " << lin_CFD << " ns \n" << endl;
 	    linTimes.push_back(lin_CFD);
-	    cout << "ratio: " << thresh/max_samp_amp << endl;
+	    //cout << "ratio: " << thresh/max_samp_amp << endl;
 	}
 
 	if(m_frac > 1){ //do LE time
