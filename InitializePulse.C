@@ -1,118 +1,148 @@
 #include "RawPulse.hh"
+#include "MakeAmps.hh"
+#include "MakeTimes.hh"
 #include "PulseFits.hh"
-//if extracting the whole pulse for every good event over the entire run is too slow,
-//try using the class to limit samples (get rid of samples at extreme ends)
-//then try just extract indices relevant to the fits
 
 
 void InitializePulse(TString file){
+    bool on = true;
+    bool off = false;
+    bool draw = true;
+
+
+
+//declare vectors you want to fill
+    std::vector<Double_t> gausCFDtimes;
+    std::vector<Double_t> gausLEtimes;
+    std::vector<Double_t> gausMeantimes;
+
     
-
-    // vector<RawPulse*> Pulses;
-    // vector<RawPulse*> pulseGraphs;
-    // RawPulse init;
-    // init.GetTree(file);
+    std::vector<Double_t> quadLEtimes;
+    std::vector<Double_t> quadMeantimes;
 
 
-
-    //for(int i = 0; i < 2; i++){ //set cuts for each channel
-        // cout << "start" << endl;
-        // RawPulse* Channel1 = new RawPulse(file, 1); //new PulseFits(...)
-        PulseFits* Channel1 = new PulseFits(file,1);
-        // cout << "initializes function" << endl;
-        Channel1->SetAmpMinimum(50, 10, 40);
-        // cout << "set min amps" << endl;
-        Channel1->SetAmpMaximum(160, 90, 160);
-        // cout << "set max amps" << endl;
-        Channel1->SetCuts(0);
-        // cout << "set cuts" << endl;
-        // Channel1->GraphFirstEvent(on); //on if true
-        // cout << "finish rawpulse" << endl;
+    std::vector<Double_t> quadtimes;
+    std::vector<Double_t> quadAmps;
 
 
-        std::vector<float> gausCFDtimes;
-        std::vector<float> gausLEtimes;
-        std::vector<float> gausMeantimes;
+    std::vector<Double_t> linearCFDtimes;
+    std::vector<Double_t> linearLEtimes;
+    std::vector<Double_t> linearMaxtimes;
 
-        std::vector<float> quadCFDtimes;
-        std::vector<float> quadLEtimes;
-        std::vector<float> quadMeantimes;
-
-        std::vector<float> linearCFDtimes;
-        std::vector<float> linearLEtimes;
-        std::vector<float> linearMaxtimes;
-
-        std::vector<float> quadAmps;
-        std::vector<float> gausAmps;
-        std::vector<float> linearAmps;
-
-        // cout << "fill vector with gaus times" << endl;
-        // Channel1->GetTimes("gaus",.2,gausCFDtimes);
-        // Channel1->GetTimes("gaus",10,gausLEtimes);
-        // Channel1->GetTimes("gaus",0,gausMeantimes);
-        // Channel1->GetAmps("gaus",0,gausAmps);
-
-        // cout << "fill vector with quad times" << endl;
-        Channel1->GetTimes("quad",.2,quadCFDtimes);
-        // Channel1->GetTimes("quad",15,quadLEtimes);
-        // Channel1->GetTimes("quad",0,quadMeantimes);
-        Channel1->GetAmps("quad",0,quadAmps);
-
-        // cout << "fill vector with linear times" << endl;
-        // Channel1->GetTimes("linear",.2,linearCFDtimes);
-        // Channel1->GetTimes("linear",15,linearLEtimes);
-        // Channel1->GetTimes("linear",0,linearMaxtimes);
-        // Channel1->GetAmps("linear",0,linearAmps);
+    std::vector<Double_t> gausAmps;
+    std::vector<Double_t> linearAmps;
 
 
-        // cout << "number of good gaus cfd time events: " << gausCFDtimes.size() << endl;
-        // cout << "gaus cfd of event# 1: " << gausCFDtimes[0] << " ns" << endl;
-        // cout << "number of good gaus le time events: " << gausLEtimes.size() << endl;
-        // cout << "gaus le of event# 1: " << gausLEtimes[0] << " ns" << endl;
-        // cout << "number of good gaus amp events: " << gausAmps.size() << endl;
-        // cout << "first gaus good amp: " << gausAmps[0] << endl;
 
-        cout << "number of good quad time events: " << quadCFDtimes.size() << endl;
-        // cout << "cfd of first good quad event: " << quadCFDtimes[0] << " ns" << endl;
+
+        //Run 1276
+        if(file=="DataNetScope_Run1276.root"){
+            if(quadAmps.size() > 0) quadAmps.clear();
+            if(quadtimes.size() > 0) quadtimes.clear();
+            PulseFits* Channel1 = new PulseFits(file,1);
+
+            Channel1->SetAmpMinimum(50, 10, 40); 
+            Channel1->SetAmpMaximum(160, 90, 160); 
+            Channel1->SetCuts(0); //photek channel number
+            Channel1->GraphFirstEvent(off);
+
+            Channel1->Initialize(0.2,"CFD","lower");
+            Channel1->GraphFits(off); //graphs amplitude + time interpolation on pulse
+            Channel1->SetInterpolation("quadratic","quadratic"); //amps first then times
+            Channel1->FillTimesFillAmps(quadAmps,quadtimes);
+
+
+            cout << "return amps" << endl;
+
+            cout << "size of quadamps: " << quadAmps.size() << endl;
+            cout << "quad amp of first event: " << quadAmps[0] << endl;
+        }
+
+
+        // Run 1251
+        if(file=="DataNetScope_Run1251.root"){
+            // TString testfile_str = "test.root";
+            // TFile* testfile = TFile::Open("test.root","RECREATE");
+            // TTree* newpulse = new TTree("evtTree","evtTree");
+
+
+            //scope channel (array index channel)
+            //for this run, the trigger was on the first channel (channel 0)
+            //photek on channel 2 (channel 1)
+            //only one DUT - W6 prerad on channel 3 (channel 2)
+
+            
+                if(quadAmps.size() > 0) quadAmps.clear();
+                if(quadtimes.size() > 0) quadtimes.clear();
+
+                PulseFits* Channel1 = new PulseFits(file,0); //change channel here: second argument
+
+                Channel1->SetAmpMinimum(0,50,60);
+                Channel1->SetAmpMaximum(0,225,225);
+                Channel1->SetCuts(1);
+
+                Channel1->GraphFirstEvent(off); //raw pulse only
+
+                Channel1->Initialize(0.2,"CFD","lower");
+                Channel1->GraphFits(off); //graphs amplitude + time interpolation on pulse
+                Channel1->SetInterpolation("quadratic","quadratic"); //amps first then times
+                Channel1->FillTimesFillAmps(quadAmps,quadtimes);
+                
+                
+
+                cout << "size of quadamps: " << quadAmps.size() << endl;
+                cout << "size of quadtimes: " << quadtimes.size() << endl;
+                cout << "amp of event # 1: " << quadAmps[0] << endl;
+
+                // // TFile* runfile = TFile::Open(file,"RECREATE");
+                // TTree* pulse = new TTree("evtTree","evtTree");
+
+                // int num_channels = 4;
+                // Double_t* i_fill[num_channels];
+                // int num_evts = quadAmps.size();
+
+                // pulse->Branch("test", &(i_fill[0][0]),Form("test[%d][%d]/D",num_channels,num_evts));
+
+                // for(int ch = 0; ch < NUM_CHANNELS; ch++){
+                //     for(int i = 0; i < num_evts; i++){
+                //         cout << "point a" << endl;
+                //         i_fill[ch][i] = input_vector[i];
+                //         cout << "point b" << endl;
+                //         pulse->Fill();
+                //         cout << "point c" << endl;
+                //     }
+                //     cout << "point d" << endl;
+                //     pulse->Write();
+                // }
+
+
+                    // testfile->ReOpen("UPDATE");
+
+                // Channel1->MakeBranches(testfile,ch,quadAmps);
+
+
+                // Channel1->MakeBranches(runfile,quadtimes);
+            }
+            // testfile->Close();
+
+          
+
+
         
-        cout << "number of good quad amp events: " << quadAmps.size() << endl;
-        
-        // cout << "number of good linear cfd times: " << linearCFDtimes.size() << endl;
-        // cout << "linear cfd of event# 22499: " << linearCFDtimes[1231] << " ns" << endl;
 
-        // cout << "gaus amp of first good event: " << gausAmps[0] << " ns" << endl;
-        // cout << "le of first good event: " << gausLEtimes[0] << " ns" << endl;
-        // cout << "meantime of first good event: " << gausMeantimes[0] << " ns" << endl;
+        if(file=="Run1738.root"){
+            PulseFits* Channel1 = new PulseFits(file,1);
 
-        // if(timetype=="gaustime") gausTimes(outputvec);
-        // if(timetype=="lineartime")linearTimes(outputvec);
-        // if(timetype=="quadtime") quadMaxTime(outputvec);
-        // if(timetype=="quadamp") quadFitAmp(outputvec);
-        // if(timetype=="gausamp") gausFitAmp(outputvec);
+            Channel1->SetAmpMinimum(0.0028,0.036,0);
+            Channel1->SetAmpMaximum(0.012,0.096,0);
+            Channel1->SetCuts(0);
+            Channel1->GraphFirstEvent(off);
 
-        // std::vector<float> quadAmps;
-        // std::vector<Double_t> gausTimes; 
-        // std::vector<Double_t> gausMeanTime;
-        // std::vector<Double_t> quadTimes;
-        // std::vector<float> linearTimes;
-        // std::vector<Double_t> sampTimes;
-
-
-
-
-
-
-
-
-
-    //}
-
-
-
-
+            cout << "SetPreferences" << endl;
+            Channel1->Initialize(0.2,"CFD","upper");
+            Channel1->SetInterpolation("quadratic","quadratic");(0.2,"quadratic","quadratic","upper");
+            cout << "FillTimesFillAmps" << endl;
+            Channel1->FillTimesFillAmps(quadAmps,quadtimes);
+        }
 
 }
-
-//vector<double> = v;
-//v.push_back(newentry);
-//RawPulse initializes data for whole pulse
