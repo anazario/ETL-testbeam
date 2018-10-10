@@ -2,6 +2,7 @@
 #include "MakeAmps.hh"
 #include "MakeTimes.hh"
 #include "PulseFits.hh"
+#include "GetBranches.hh"
 
 
 void InitializePulse(TString file){
@@ -47,8 +48,8 @@ void InitializePulse(TString file){
             Channel1->GraphFirstEvent(off);
 
             Channel1->Initialize(0.2,"CFD","lower");
-            Channel1->GraphFits(off); //graphs amplitude + time interpolation on pulse
-            Channel1->SetInterpolation("quadratic","quadratic"); //amps first then times
+            Channel1->GraphFits(on); //graphs amplitude + time interpolation on pulse
+            Channel1->SetInterpolation("quadratic","linear"); //amps first then times
             Channel1->FillTimesFillAmps(quadAmps,quadtimes);
 
 
@@ -75,24 +76,28 @@ void InitializePulse(TString file){
                 if(quadAmps.size() > 0) quadAmps.clear();
                 if(quadtimes.size() > 0) quadtimes.clear();
 
-                PulseFits* Channel1 = new PulseFits(file,0); //change channel here: second argument
+                PulseFits* Channel1 = new PulseFits(file,2); //change channel here: second argument
+                GetBranches* newpulse  = new GetBranches(file);
 
-                Channel1->SetAmpMinimum(0,50,60);
+                Channel1->SetAmpMinimum(0,50,50);
                 Channel1->SetAmpMaximum(0,225,225);
-                Channel1->SetCuts(1);
+                Channel1->SetCuts(1); 
 
                 Channel1->GraphFirstEvent(off); //raw pulse only
-
+                cout << "Initialize" << endl;
                 Channel1->Initialize(0.2,"CFD","lower");
-                Channel1->GraphFits(off); //graphs amplitude + time interpolation on pulse
-                Channel1->SetInterpolation("quadratic","quadratic"); //amps first then times
+                cout << "GraphFits" << endl;
+                Channel1->GraphFits(on); //graphs amplitude + time interpolation on pulse
+                cout << "SetInterpolation" << endl;
+                Channel1->SetInterpolation("quadratic","linear"); //amps first then times
+                cout << "FillTimesFillAmps" << endl;
                 Channel1->FillTimesFillAmps(quadAmps,quadtimes);
                 
                 
 
                 cout << "size of quadamps: " << quadAmps.size() << endl;
                 cout << "size of quadtimes: " << quadtimes.size() << endl;
-                cout << "amp of event # 1: " << quadAmps[0] << endl;
+                cout << "amp of event # 2: " << quadAmps[1] << endl;
 
                 // // TFile* runfile = TFile::Open(file,"RECREATE");
                 // TTree* pulse = new TTree("evtTree","evtTree");
@@ -122,6 +127,7 @@ void InitializePulse(TString file){
 
 
                 // Channel1->MakeBranches(runfile,quadtimes);
+                newpulse->FillTree();
             }
             // testfile->Close();
 

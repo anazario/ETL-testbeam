@@ -155,7 +155,7 @@ inline void RawPulse::GetTree(TString file){
     // cout << file << endl;
     runtree->SetBranchStatus("*", 0);     
     runtree->SetBranchStatus("amp", 1);
-    runtree->SetBranchStatus("i_evt", 1);
+    // runtree->SetBranchStatus("i_evt", 0);
     runtree->SetBranchStatus("event",1);                                                                                                                 
     runtree->SetBranchStatus("channel", 1);
     runtree->SetBranchStatus("time", 1);
@@ -256,6 +256,7 @@ inline void RawPulse::GetGoodEvents(){
     }
     NEvents = good_events.size();
 }
+
 
 
 

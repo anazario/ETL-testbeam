@@ -155,7 +155,7 @@ inline void PulseFits::GraphFits(bool draw_opt){
 
 
 inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes){
-	for(int i = 0; i < 5; i++){ //NEvents
+	for(int i = 0; i < NEvents; i++){ //NEvents
 		// cout << "Event #: " << good_events[i] << endl;
 		SetTGraph(good_events[i]);
 		if(i==0){
@@ -177,7 +177,9 @@ inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std:
 			ReturnAmps(m_graph,amp_interp,outputamps,pf_draw);
 
 			SetThreshold(outputamps[i]);
+			// cout << "amp " << i << ": " << outputamps[i] << endl;
 			ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound,pf_draw,good_events[i]);
+			// cout << "time " << i << ": " << outputtimes[i] << endl;
 
 		}
 		
