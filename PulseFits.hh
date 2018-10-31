@@ -1,8 +1,8 @@
-ifndef PulseFits_HH
+#ifndef PulseFits_HH
 #define PulseFits_HH
 
-// #include "MakeTimes.hh"
-// #include "MakeAmps.hh"
+#include "MakeTimes.hh"
+#include "MakeAmps.hh"
 
 #define NUM_CHANNELS 4
 // #define NUM_SAMPLES 1000
@@ -23,7 +23,7 @@ public:
 	void Initialize(float thresh_val, TString method, TString bound);
 	void GraphFits(bool draw_opt);
 
-	void FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes);
+	void FillTimesFillAmps(std::vector<float>& outputamps, std::vector<float>& outputtimes);
 	void MakeBranches(TFile* newfile, int ch, std::vector<double> input_vector);
 
 
@@ -39,13 +39,13 @@ private:
 	TString time_interp;
 	TString pf_bound;
 	TString pf_method;
-	Double_t pf_thresh;
-	Double_t pf_thresh_val;
+	float pf_thresh;
+	float pf_thresh_val;
 	TGraphErrors* m_graph;
-	bool pf_draw;
+	bool pf_draw = false;
 
-	void SetTGraph(int evt);
-	void SetThreshold(Double_t amp);
+        void SetTGraph(int evt);
+	void SetThreshold(float amp);
 
 
 	
@@ -59,89 +59,6 @@ private:
 
 #endif
 
-//put implementations of functions here
-
-inline void PulseFits::PulseInit(float fraction){
-	m_frac = fraction;
-	SetFitLimits();
-	SetFunctions();
-	
-};
-
-
-////////////////////////////
-//FILL OUTPUT TIME VECTORS//
-////////////////////////////
-
-
-
-
-inline void PulseFits::GetTimes(TString timetype, float fraction, std::vector<float> &outputtimes){
-	cout << "GetTimes" << endl;
-
-	int NEvents = good_events.size();
-	// cout << "good events size: " << NEvents << endl;
-	for(int i = 0; i < NEvents; i++){ 
-		// cout << "linearinit for samp_max_time" << endl;
-		// samp_max_time = linearInit();
-		// cout << "get t graph" << endl;
-		graph = GetTGraph(good_events[i]);
-		// TString title_str = Form("%i", good_events[i]);
-		// graph->SetTitle("Event " + title_str);
-		PulseInit(fraction);
-		linearInit(m_frac);
-		if(timetype=="gaus"){
-			// cout << "gaus times" << endl;
-			gausFitAmp();
-			gausTimes(outputtimes);
-		}	
-		if(timetype=="quad") {
-			// cout << "quad times" << endl;
-			// cout << "event #: " << good_events[i] << endl;
-
-			quadFitAmp();
-			quadTimes(outputtimes);
-		}
-		if(timetype=="linear"){
-			// cout << "event #: " << good_events[i] << "\n" << endl;
-			linearTimes(outputtimes);
-		}
-
-	}
-}	
-
-inline void PulseFits::GetAmps(TString timetype, float fraction, std::vector<float>& outputamps, bool draw){
-	// cout << "GetAmps" << endl;
-	TString fitstring = timetype + " fit";
-	TText* fitnote = new TText(60,100,fitstring);
-	TCanvas* canvas = new TCanvas("canvas","scope pulse",500,500);
-	int NEvents = good_events.size();
-	// cout << "good events size: " << NEvents << endl;
-	for(int i = 0; i < NEvents; i++){ 
-		// cout << "linearinit for samp_max_time" << endl;
-		// samp_max_time = linearInit();
-		// cout << "get t graph" << endl;
-		graph = GetTGraph(good_events[i]);
-		TString title_str = Form("%i", good_events[i]);
-		graph->SetTitle("Event " + title_str);
-		graph->GetXaxis()->SetTitle("time (ns)");
-		graph->GetYaxis()->SetTitle("amplitude (mV)");
-		graph->SetMarkerSize(0.5);
-		graph->SetMarkerStyle(20);
-		PulseInit(fraction);
-		linearInit(m_frac);
-		if(timetype=="gaus"){
-			// cout << "gaus times" << endl;
-			// float gausamps = gausFitAmp();
-			gausFitAmp(outputamps,draw);
-			fitnote->Draw("sames");
-			// cout << "gausamp: " << gausamps << endl;
-			// outputamps.push_back(gausamps);
-		}	
-		if(timetype=="quad") {
-			// cout << "quad times" << endl;
-			quadFitAmp(outputamps,draw);
-			fitnote->Draw("sames");
 
 inline void PulseFits::MakeBranches(TFile* newfile, int ch, std::vector<double> input_vector){
    	newfile->ReOpen("UPDATE");
@@ -151,7 +68,7 @@ inline void PulseFits::MakeBranches(TFile* newfile, int ch, std::vector<double> 
 	
     int num_evts = input_vector.size();
     cout << "num_evts: " << num_evts << endl;
-    Double_t i_fill[NUM_CHANNELS];
+    float i_fill[NUM_CHANNELS];
 
 
     newtree->Branch("test", &i_fill[0],Form("test[%d]/D",NUM_CHANNELS));
@@ -191,18 +108,9 @@ inline void PulseFits::Initialize(float thresh_val, TString method, TString boun
 
 
 
-inline void PulseFits::quadFitAmp(){
-	//fit is based on range given by max index (but fit does not start from this max)
-	graph->Fit("fquad", "Q", " ", quad_low_edge,quad_high_edge); //change options to see fit
-	quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
-
-	// cout << "quad amp: " << quadamp << endl;
-
-	
-}
 
 
-inline void PulseFits::SetThreshold(Double_t amp){
+inline void PulseFits::SetThreshold(float amp){
 	if(pf_method == "CFD"){
 		pf_thresh = pf_thresh_val*amp;
 	}
@@ -246,29 +154,8 @@ inline void PulseFits::GraphFits(bool draw_opt){
 
 
 
-<<<<<<< HEAD
-	if(m_frac < 1){
-		float thresh = m_frac*quadamp; //threshold value
-
-		// cout << "quad amp value: " << gaus_max_amp << endl;
-		// cout << "quad cfd threshold: " << thresh << " mV" << endl;
-		float quad_time_cfd = fquad->GetX(thresh, quad_low_edge, quad_max_loc);
-		// Double_t exit_time_cfd = fpeak->GetX(thresh, max_loc, index_last);
-		// Double_t time_thresh = (entr_time_cfd+exit_time_cfd)/2;
-		// cout << "quad cfd time: " << quad_time_cfd << " ns" << "\n" << endl;
-		quadtime.push_back(quad_time_cfd);
-	}
-
-	if(m_frac > 1){
-		// cout << "gaus le threshold: " << m_frac << " mV" << endl;
-
-	  float quad_LE_time = float(fquad->GetX(m_frac, quad_low_edge, quad_max_loc));
-		// cout << "gaus LE time: " << LE_time << " ns" << endl;
-		quadtime.push_back(quad_LE_time);
-	}
-=======
-inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std::vector<Double_t>& outputtimes){
-	for(int i = 0; i < 5; i++){ //NEvents
+inline void PulseFits::FillTimesFillAmps(std::vector<float>& outputamps, std::vector<float>& outputtimes){
+	for(int i = 0; i < NEvents; i++){ //NEvents
 		// cout << "Event #: " << good_events[i] << endl;
 		SetTGraph(good_events[i]);
 		if(i==0){
@@ -290,8 +177,9 @@ inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std:
 			ReturnAmps(m_graph,amp_interp,outputamps,pf_draw);
 
 			SetThreshold(outputamps[i]);
+			// cout << "amp " << i << ": " << outputamps[i] << endl;
 			ReturnTimes(m_graph,outputtimes,pf_thresh,time_interp,pf_method,pf_bound,pf_draw,good_events[i]);
->>>>>>> 055915e731ebc212677b6c284a627be1059c9fbe
+			// cout << "time " << i << ": " << outputtimes[i] << endl;
 
 		}
 		
@@ -326,14 +214,6 @@ inline void PulseFits::FillTimesFillAmps(std::vector<Double_t>& outputamps, std:
 // 			TLine* line = new TLine(quad_time_cfd-1,thresh,quad_time_cfd+2,thresh);
 // 			line->SetLineStyle(9);
 
-<<<<<<< HEAD
-	    float lin_CFD = (thresh - b)/slope;
-	    // cout << "linear cfd time: " << lin_CFD << " ns \n" << endl;
-	    linTimes.push_back(lin_CFD);
-	    //cout << "ratio: " << thresh/max_samp_amp << endl;
-	}
-=======
->>>>>>> 055915e731ebc212677b6c284a627be1059c9fbe
 
 // 			TText* timenote = new TText(quad_time_cfd-9,100,"CFD time at 20%: " + timestring + " ns");
 // 			timenote->SetTextSize(.033);

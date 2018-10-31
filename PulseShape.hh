@@ -43,10 +43,10 @@ public:
     main_tree->SetBranchStatus("amp", 1);
     main_tree->SetBranchStatus("channel", 1);
     main_tree->SetBranchStatus("time", 1);
-    main_tree->SetBranchStatus("gaus_mean",1);
+    //main_tree->SetBranchStatus("gaus_mean",1);
     main_tree->SetBranchAddress("channel",channel, &channel_br);
     main_tree->SetBranchAddress("time", time, &time_br);
-    main_tree->SetBranchAddress("gaus_mean", gaus_mean, &gaus_br);
+    //main_tree->SetBranchAddress("gaus_mean", gaus_mean, &gaus_br);
   }
 
   void SetDutChannel(int ch, TString name){
@@ -71,10 +71,21 @@ public:
   void SetCuts(float dut_min, float dut_max){
 
     if(dut_channel >= 0 || dut_channel < NUM_CHANNEL) {
-      FormatAmpCuts(dut_min,dut_max,dut_channel);
+      amp_cut_string=FormatAmpCuts(dut_min,dut_max,dut_channel);
       cout << "Cuts Applied: " << amp_cut_string << endl;
     }
     else cout << "Channel " << dut_channel << " is not a valid channel for the dut." << endl;
+  }
+
+  void SetAllCuts(int dut_ch, int pho_ch, float dut_min, float dut_max, float pho_min, float pho_max){
+
+    amp_cut_string = FormatAmpCuts(dut_min,dut_max,dut_ch);
+    amp_cut_string += " && ";
+    TString temp_string = FormatAmpCuts(pho_min,pho_max,pho_ch);
+    amp_cut_string += temp_string;
+
+    cout << "Cuts Applied: " << amp_cut_string << endl;
+
   }
 
   void SetGoodPulses(){
@@ -149,16 +160,17 @@ public:
 
   static float* MakeInterpolation(float* sample, float t0, float amp_peak, float step_size){
     
-    int xmin = -1;
-    int xmax = 1;
+    int xmin = -1.;
+    int xmax = 1.;
 
     float t0_amp = -PulseTools::InterpolateFunc(sample,NUM_SAMPLES,t0);
     float LE_ratio = round((t0_amp/amp_peak)*10.)/10.;
+    LE_ratio = 1.;
 
-    //cout << t0 << " " << amp_peak << " " << (t0_amp/amp_peak) << endl;
+    //cout << t0 << " " << t0_amp << " " << amp_peak << " " << (t0_amp/amp_peak) << endl;
 
-    //if(LE_ratio != 1)
-      //cout << "ratio: " << LE_ratio << endl;
+    //if(LE_ratio != 0.2)
+    //cout << "ratio: " << LE_ratio << endl;
 
     int nLeft, nRight;
     float size = float(xmax-xmin)/step_size;
@@ -169,7 +181,7 @@ public:
     }
 
     else{
-      nLeft = int(size*0.2);
+      nLeft = int(size*0.20);
       nRight = int(size) - nLeft;
     }
 
@@ -199,7 +211,7 @@ public:
       for(int j = 0; j < vec_size; j++)
 	hist_vec[j].Fill(processed_sample[j]);
     }
-    delete processed_sample;
+    delete [] processed_sample;
     return PulseTools::GetMeanArr(hist_vec);
   }
 
@@ -238,7 +250,7 @@ public:
       return;
     }
   }
-  
+
   void PlotAllPulses(vector<float> t0, vector<float> max_amp){
     PlotAll(t0,max_amp,step_size,"AllPulses","Amplitude (1/Peak Amplitude)",MakeInterpolation);
   }
@@ -271,7 +283,6 @@ public:
     PlotRange(xmin,xmax,total_slices,"rangeplots/PulseMeanErr","Amplitude (1/Peak Amplitude)","pulse",MakeInterpolation);
   }
 
-
 private:
 
   TTree* main_tree;
@@ -297,16 +308,17 @@ private:
   TString amp_cut_string = "";
   TString dut_name = "null";
 
-  void FormatAmpCuts(float xmin, float xmax, int channel){
+  TString FormatAmpCuts(float xmin, float xmax, int channel){
 
     TString genericCut = "(amp[%s] > %s && amp[%s] < %s)";
-    TString channel_str, xmin_str, xmax_str;
+    TString channel_str, xmin_str, xmax_str, fstring;
 
     channel_str.Form("%i",channel);
-    xmin_str.Form("%i",int(xmin));
-    xmax_str.Form("%i",int(xmax));
+    xmin_str.Form("%f",xmin);
+    xmax_str.Form("%f",xmax);
 
-    amp_cut_string.Form(genericCut, channel_str.Data(), xmin_str.Data(), channel_str.Data(), xmax_str.Data());
+    fstring.Form(genericCut, channel_str.Data(), xmin_str.Data(), channel_str.Data(), xmax_str.Data());
+    return fstring;
   }
 
   void MakeGoodEntryList(){
@@ -332,12 +344,25 @@ private:
     }
   }
 
+  TString RmSpace(TString str){
+
+    TString temp_str = str;
+    temp_str.ReplaceAll(" ", "_");
+    temp_str.ReplaceAll(".", "p");
+    temp_str.ReplaceAll("(", "_");
+    temp_str.ReplaceAll(")", "_");
+
+    return temp_str;
+  }
+
   void PlotAll(vector<float> t0, vector<float> max_amp, float step_size, TString name, TString y_label, std::function<float*(float*,float,float,float)> PulseType){
 
+    cout << good_entries.size() << endl;
     main_tree->GetEntry(good_entries[0]);
 
+    //cout << good_entries[0] << endl;
     int total = int(2./step_size)+1;
-    float* xAxis = PulseTools::LinSpace(-1.2,0.8,step_size);
+    float* xAxis = PulseTools::LinSpace(-1.,1.,step_size);
     float* yAxis;
     yAxis = PulseType(channel[dut_channel],t0[0],max_amp[0],step_size);
 
@@ -350,7 +375,7 @@ private:
 
     tg[0].Draw();
 
-    for(int i = 1; i < good_entries.size(); i++){
+    for(int i = 0; i < good_entries.size(); i++){
       main_tree->GetEntry(good_entries[i]);
       yAxis = PulseType(channel[dut_channel],t0[i],max_amp[i],step_size);
       tg[i] = TGraph(total,xAxis,yAxis);
@@ -360,7 +385,7 @@ private:
 
     CMSmark(dut_name);
     gPad->SetGrid(1, 1); gPad->Update();
-    cv->SaveAs(name+"_"+dut_name+"_"+".pdf");
+    cv->SaveAs(name+"_"+RmSpace(dut_name)+"_"+".pdf");
     cv->Close();
 
     delete cv;
@@ -386,7 +411,7 @@ private:
     tg->Draw();
     CMSmark(dut_name);
     gPad->SetGrid(1, 1); gPad->Update();
-    cv->SaveAs(name+"_"+dut_name+"_"+".pdf");
+    cv->SaveAs(name+"_"+RmSpace(dut_name)+"_"+".pdf");
     cv->Close();
 
     delete cv;
@@ -460,7 +485,8 @@ private:
 
     CMSmark(dut_name);
     gPad->SetGrid(1, 1); gPad->Update();
-    cv->SaveAs(name+"_"+dut_name+".pdf");
+
+    cv->SaveAs(name+"_"+RmSpace(dut_name)+".pdf");
     cv->Close();
 
     delete [] xAxis;
@@ -483,15 +509,24 @@ private:
 
     TString gen_string = "_Amp_%iTo%i";
 
+    vector<float> total_t0;
+    vector<float> total_max_amp;
     vector<float> t0;
     vector<float> max_amp;
 
-    float amp_per_slice = (xmax - xmin)/float(total_slices);
+    SetCuts(xmin,xmax);
+    SetGoodPulses();
 
-    float temp_xmin = xmin;
-    float temp_xmax = temp_xmin+float(amp_per_slice);
+    GetMaxT0Amp0Vec(total_t0,total_max_amp);
+    std::sort(total_max_amp.begin(),total_max_amp.end());
+    int npulses = total_max_amp.size();
 
-    for(int i = 0; i < total_slices; i++){
+    float amp_percent = (1/float(total_slices));
+
+    float temp_xmin = total_max_amp[0];
+    float temp_xmax = total_max_amp[min(npulses-1,int(npulses/total_slices))];
+
+    for(int i = 1; i < total_slices+1; i++){
 
       SetCuts(temp_xmin,temp_xmax);
       SetGoodPulses();
@@ -499,12 +534,16 @@ private:
       cout << "Plotting range " << temp_xmin << " to " << temp_xmax << endl;
 
       GetMaxT0Amp0Vec(t0,max_amp);
+
+      cout << amp_percent*(i+1) << endl;
+      cout << round(npulses*amp_percent)*(i+1) << endl;
+ 
       //PlotAll(t0,max_amp,step_size,name+Form(gen_string,temp_xmin,temp_xmax),y_label,PulseType);                                                                                                        
       //PlotMean(t0,max_amp,step_size,name+Form(gen_string,temp_xmin,temp_xmax),y_label,PulseType);
-      PlotMeanErr(t0,max_amp,step_size,name+Form(gen_string,int(temp_xmin),int(temp_xmax)),y_label,opt,PulseType);
+      PlotMeanErr(t0,max_amp,step_size,name+Form(gen_string,int(round(temp_xmin)),int(round(temp_xmax))),y_label,opt,PulseType);
 
-      temp_xmin += amp_per_slice;
-      temp_xmax += amp_per_slice;
+      temp_xmin = temp_xmax;
+      temp_xmax = total_max_amp[min(npulses-1,int(npulses*amp_percent)*(i+1))];
 
       t0.clear();
       max_amp.clear();

@@ -10,7 +10,7 @@ public:
 	MakeAmps(TString file, int channel) : RawPulse(file, channel){ };
 	virtual ~MakeAmps(){ };
 
-	void ReturnAmps(TGraphErrors* gr, TString input_interp, std::vector<Double_t>& output_amps, bool draw_opt);
+	void ReturnAmps(TGraphErrors* gr, TString input_interp, std::vector<float>& output_amps, bool draw_opt);
 
 protected:
 
@@ -18,20 +18,20 @@ protected:
 private:
 
 	TGraphErrors* m_graph;
-	std::vector<Double_t> amppoints;
+	std::vector<float> amppoints;
 	bool m_draw;
 
 	Double_t x1; Double_t y1;
 	Double_t x2; Double_t y2;
 	Double_t x3; Double_t y3;
 
-	void SetTGraph(TGraphErrors* gr);
+        void SetTGraph(TGraphErrors* gr);
 
-	Double_t SetGraphLimit(int offset);
-	void quadAmp(std::vector<Double_t> &quadAmps);
+	float SetGraphLimit(int offset);
+	void quadAmp(std::vector<float> &quadAmps);
 	void SetCoeff(TF1* func);
-	void gausAmp(std::vector<Double_t> &gausAmps);
-	void linearAmp(std::vector<Double_t> &linAmps);
+	void gausAmp(std::vector<float> &gausAmps);
+	void linearAmp(std::vector<float> &linAmps);
 
 
 };
@@ -44,7 +44,7 @@ inline void MakeAmps::SetTGraph(TGraphErrors* gr){
 }
 
 
-inline Double_t MakeAmps::SetGraphLimit(int offset){
+inline float MakeAmps::SetGraphLimit(int offset){
 	Double_t y; Double_t edge;
 	m_graph->GetPoint(idx_min+offset, edge, y);
 	return edge;
@@ -64,10 +64,10 @@ inline void MakeAmps::SetCoeff(TF1* func){
 	m_graph->GetPoint(idx_min+1, x3, y3);
 
 
-	Double_t DEN = (x1-x2)*(x1-x3)*(x3-x2);
-	Double_t a_coeff = (y1*(x3-x2) + y2*(x1-x3) + y3*(x2-x1))/DEN;
-	Double_t b_coeff = (y1*(x2*x2-x3*x3) + y2*(x3*x3-x1*x1) + y3*(x1*x1-x2*x2))/DEN;
-	Double_t c_coeff = (y1*x2*x3*(x3-x2) + y2*x1*x3*(x1-x3) + y3*x1*x2*(x2-x1))/DEN; 
+	float DEN = (x1-x2)*(x1-x3)*(x3-x2);
+	float a_coeff = (y1*(x3-x2) + y2*(x1-x3) + y3*(x2-x1))/DEN;
+        float b_coeff = (y1*(x2*x2-x3*x3) + y2*(x3*x3-x1*x1) + y3*(x1*x1-x2*x2))/DEN;
+	float c_coeff = (y1*x2*x3*(x3-x2) + y2*x1*x3*(x1-x3) + y3*x1*x2*(x2-x1))/DEN; 
 
 
 
@@ -77,9 +77,9 @@ inline void MakeAmps::SetCoeff(TF1* func){
 	func->SetParameter(0,c_coeff);
 }
 
-inline void MakeAmps::quadAmp(std::vector<Double_t> &quadAmps){
-	Double_t quad_low_edge = SetGraphLimit(-1);
-	Double_t quad_high_edge = SetGraphLimit(1);
+inline void MakeAmps::quadAmp(std::vector<float> &quadAmps){
+	float quad_low_edge = SetGraphLimit(-1);
+	float quad_high_edge = SetGraphLimit(1);
 	TF1* fquad = new TF1("fquad","pol2(0)", quad_low_edge, quad_high_edge);
 	fquad->SetNpx(1000);
 	SetCoeff(fquad);
@@ -97,7 +97,7 @@ inline void MakeAmps::quadAmp(std::vector<Double_t> &quadAmps){
 	}
 	
 
-	Double_t quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
+	float quadamp = fquad->GetMaximum(quad_low_edge,quad_high_edge);
 	quadAmps.push_back(quadamp);
 
 }
@@ -109,9 +109,9 @@ inline void MakeAmps::quadAmp(std::vector<Double_t> &quadAmps){
 
 
 
-inline void MakeAmps::gausAmp(std::vector<Double_t> &gausAmps){
-	Double_t gaus_low_edge = SetGraphLimit(-8);
-	Double_t gaus_high_edge = SetGraphLimit(8);
+inline void MakeAmps::gausAmp(std::vector<float> &gausAmps){
+	float gaus_low_edge = SetGraphLimit(-8);
+	float gaus_high_edge = SetGraphLimit(8);
 	TF1* fpeak = new TF1("fpeak","gaus", gaus_low_edge, gaus_high_edge);
 
 	m_graph->Fit("fpeak","Q"," ",gaus_low_edge,gaus_high_edge);
@@ -130,7 +130,7 @@ inline void MakeAmps::gausAmp(std::vector<Double_t> &gausAmps){
 
 
 
-inline void MakeAmps::linearAmp(std::vector<Double_t> &linAmps){
+inline void MakeAmps::linearAmp(std::vector<float> &linAmps){
 	Double_t y = 0.; Double_t samp_amp;
 	m_graph->GetPoint(idx_min, samp_amp, y);
 	linAmps.push_back(y);
@@ -139,7 +139,7 @@ inline void MakeAmps::linearAmp(std::vector<Double_t> &linAmps){
 
 
 
-inline void MakeAmps::ReturnAmps(TGraphErrors* gr, TString input_interp, std::vector<Double_t>& output_amps, bool draw_opt){
+inline void MakeAmps::ReturnAmps(TGraphErrors* gr, TString input_interp, std::vector<float>& output_amps, bool draw_opt){
 	m_draw = draw_opt;
 	SetTGraph(gr);
 	// SetFitPoints();
